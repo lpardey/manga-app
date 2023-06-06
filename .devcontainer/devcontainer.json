@@ -1,5 +1,5 @@
 {
-	"name": "manga-app",
+	"name": "new project",
 	"build": {
 		"dockerfile": "../Dockerfile",
 		"context": "..",
