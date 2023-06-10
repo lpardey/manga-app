@@ -1,14 +1,16 @@
-# python-project
+# Manga-download-app
 
-This project is a template to kick-start a new python based project with:
+The app receives a URL of a manga from a selected website to:
+    - Generate a directory named after the manga.
+        - Generate a zip file inside the directory for every chapter of the manga.
+          Sorted jpg files will be inside the zip files.
 
-* automated image building, including requirements
-* devcontainer + vscode configuration
-* basic .gitignore
-* tests directory scaffolding
-* configuration for flake8, black, mypy, isort, etc
-* setup.py script for automatic installation
+Websites for request:
+    Manga:
+        - https://manganato.com/
+        - https://www.mangatown.com/
 
-# coming soon:
-
-* github actions configuration for CI/CD pipeline
+    Manwhas y Manhuas:
+        - https://www.asurascans.com/
+        - https://reaperscans.com/
+        - https://www.mngdoom.com/
