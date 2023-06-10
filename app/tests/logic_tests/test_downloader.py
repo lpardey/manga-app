@@ -1,14 +1,15 @@
+from types import NoneType
 import pytest
 from unittest import mock
 from bs4 import BeautifulSoup
-from app.logic.app import Downloader
+from app.logic.app import Manganato
 
 
 def test_create_directory_success(web_data_main_page: BeautifulSoup):
-    downloader = Downloader(web_data=web_data_main_page)
+    downloader = Manganato(web_data=web_data_main_page)
     dir_name = "Fullmetal Alchemist"
     response = downloader.create_directory()
-    assert response == None
+    assert type(response) == NoneType
 
 
 # def create_directory(self) -> None:
