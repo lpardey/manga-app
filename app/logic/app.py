@@ -1,6 +1,7 @@
 # Standard Library
 from abc import ABC, abstractmethod
 import os
+import shutil
 
 # Dependencies
 from bs4 import BeautifulSoup
@@ -26,10 +27,10 @@ DESKTOP_PATH = os.path.expanduser("~/Desktop")  # Supports Unix or Windows (afte
 
 
 class Downloader(ABC):
-    def __init__(self, web_data: BeautifulSoup, dir_path: str = DESKTOP_PATH) -> None:
+    def __init__(self, web_data: BeautifulSoup, desktop_path: str = DESKTOP_PATH) -> None:
         super().__init__()
         self.web_data = web_data
-        self.dir_path = dir_path
+        self.desktop_path = desktop_path
 
     @abstractmethod
     def create_directory(self) -> None:
@@ -63,8 +64,11 @@ class Manganato(Downloader):
 
         try:
             dir_name = scraped_data.string.removesuffix("Manga Online Free - Manganato").strip()
-            path = os.path.join(self.dir_path, dir_name)
-            os.mkdir(path)
+            path = os.path.join(self.desktop_path, dir_name)
+            if os.path.exists(path):
+                # TODO: Ask user if he wants to overwrite or not.Handle 'FileExistsError'.
+                shutil.rmtree(path)  # overwrite
+            os.mkdir(path)  # Path is not equal to /home/lpardey/Desktop and is iving an error
         except DownloaderException as e:
             raise DownloaderExceptionUnexpected(str(e))
 
