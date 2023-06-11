@@ -1,26 +1,33 @@
-from types import NoneType
 import pytest
+import unittest
 from unittest import mock
 from bs4 import BeautifulSoup
-from app.logic.app import Manganato
+from app.logic.app import DownloaderException, Manganato
 
 
-def test_create_directory_success(web_data_main_page: BeautifulSoup):
+@mock.patch.object(Manganato, "get_directory_name")
+@mock.patch("os.path.join")
+def test_create_directory_success(
+    m_os_path_join: mock.Mock,
+    m_get_directory_name: mock.Mock,
+    web_data_main_page: BeautifulSoup,
+):
     downloader = Manganato(web_data=web_data_main_page)
-    dir_name = "Fullmetal Alchemist"
+    m_get_directory_name.return_value = "Fullmetal Alchemist"
+    m_os_path_join.return_value = f"{downloader.desktop_path}/{m_get_directory_name.return_value}"
     response = downloader.create_directory()
-    assert type(response) == NoneType
+    expected_response = m_os_path_join.return_value
+    assert response == expected_response
+    assert m_get_directory_name.call_count == 1
+    assert m_os_path_join.call_count == 1
 
 
-# def create_directory(self) -> None:
-#     """Generate a directory named after the manga"""
-#     scraped_data = self.web_data.find("title")
-#     if scraped_data is None:  # TODO: Ask user for a title name to create the dir instead of raising exception
-#         raise DownloaderExceptionMissingTitle()
-
-#     try:
-#         dir_name = scraped_data.name
-#         path = os.path.join(self.dir_path, dir_name)
-#         os.mkdir(path)
-#     except DownloaderException as e:
-#         raise DownloaderExceptionUnexpected(str(e))
+@unittest.skip("TO DO!")
+@mock.patch.object(Manganato, "get_directory_name")
+@mock.patch("os.path.join")
+def test_create_directory_failure(
+    m_os_path_join: mock.Mock,
+    m_get_directory_name: mock.Mock,
+    web_data_main_page: BeautifulSoup,
+):
+    pass
