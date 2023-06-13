@@ -6,7 +6,7 @@ from zipfile import ZipFile
 
 # Dependencies
 from bs4 import BeautifulSoup
-from app.client.client import DownloaderClient
+from app.client.client import DownloaderClient as dc
 from app.logic.schemas import Chapter, Image
 
 
@@ -104,22 +104,23 @@ class Manganato(Downloader):
         return chapters
 
     def get_images_data(self, url: str) -> BeautifulSoup:
-        html_doc = DownloaderClient.get_data(url).text
-        images_data = DownloaderClient.get_web_data(html_doc)
+        html_doc = dc.get_data(url).text
+        images_data = dc.get_web_data(html_doc)
         return images_data
 
     def get_images(self, img_src: str) -> list[Image]:
         images_data = self.get_images_data(img_src)
         scraped_data = images_data.select_one("div.container-chapter-reader").findChildren("img")
         images = [
-            Image(number=index, source=data["src"], file=DownloaderClient.get_data(data["src"]).content)
+            Image(number=index, source=data["src"], file=dc.get_data(data["src"]).content)
             for index, data in enumerate(scraped_data, start=1)
         ]
         return images
 
     def create_zip_file(self, dir_path: str, format: str, chapters: list[Chapter]) -> None:
         for chapter in chapters:
-            file_name = f"{dir_path}/{chapter.number}. {chapter.name}.{format}"
-            with ZipFile(file_name, "a") as zipf:
+            file = f"{dir_path}/{chapter.number}. {chapter.name}.{format}"
+            with ZipFile(file, "a") as zipf:
                 for image in chapter.images:
                     zipf.write(image.file, image.number)
+
