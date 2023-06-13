@@ -8,4 +8,4 @@ class DownloaderClient:
         return response
 
     def get_web_data(html_doc: str) -> BeautifulSoup:
-        return BeautifulSoup(html_doc, "lxml")
+        return BeautifulSoup(html_doc, "html.parser")
