@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class Image(BaseModel):
     number: int | None = None
     source: str
+    file: bytes
 
 
 class Chapter(BaseModel):
