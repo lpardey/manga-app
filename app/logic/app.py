@@ -1,13 +1,15 @@
 # Standard Library
-from abc import ABC, abstractmethod
+import logging
 import os
+from abc import ABC, abstractmethod
 from zipfile import ZipFile
 
 # Dependencies
-from bs4 import BeautifulSoup
 import requests
+from bs4 import BeautifulSoup
+
+# Local imports
 from . import utils
-import logging
 
 logger = logging.getLogger(__name__)
 

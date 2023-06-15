@@ -1,8 +1,13 @@
-import pytest
+# Standard Library
 import unittest
 from unittest import mock
+
+# Dependencies
+import pytest
 from bs4 import BeautifulSoup
-from app.logic.app import DownloaderException, Manganato
+
+# From apps
+from app.logic.app import Manganato
 
 
 @mock.patch.object(Manganato, "get_directory_name")
