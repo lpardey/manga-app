@@ -37,19 +37,22 @@ class Downloader(ABC):
         self.directory_path = directory_path if directory_path is not None else "."
 
     def get_directory_name(self) -> str:
+        """Scrapes a title from website and returns it in an suitable format"""
         title = self.get_title()
         dir_name = utils.format_name(title)
         return dir_name
 
     def create_directory(self) -> str:
+        """Creates a directory on the path specified (default path: '.')"""
         dir_name = self.get_directory_name()
         path = os.path.join(self.directory_path, dir_name)
         os.makedirs(path, exist_ok=True)
 
     def get_headers(self) -> dict[str, str]:
-        return {}
+        return dict()
 
-    def add_page(self, zipfile: ZipFile, image_index: int, image_url: str) -> None:
+    def add_image(self, zipfile: ZipFile, image_index: int, image_url: str) -> None:
+        """Adds an image to a zip file"""
         image_data = self.download_image(image_url)
         image_basename = os.path.basename(image_url)
         formatted_image_name = utils.format_name(image_basename)
@@ -57,37 +60,43 @@ class Downloader(ABC):
         zipfile.writestr(image_filename, image_data)
 
     def download_chapter(self, index: int, chapter_url: str) -> None:
+        """Gets chapter data, creates a zip file by its name, and downloads and stores its images to the zip file"""
         data = BeautifulSoup(requests.get(chapter_url, headers=self.get_headers()).text, "html.parser")
         chapter_path = self.get_chapter_filename(index, data)
-        images_url = self.get_image_urls(data)
+        images_url = self.get_images_urls(data)
         with ZipFile(chapter_path, "w") as zipf:
             for image_index, image_url in enumerate(images_url):
-                self.add_page(zipf, image_index, image_url)
+                self.add_image(zipf, image_index, image_url)
 
     def download_all_chapters(self) -> None:
+        """Downloads all chapters of a manga"""
         chapters_url = self.get_chapters_urls()
         for index, url in enumerate(chapters_url):
             self.download_chapter(index, url)
 
     @abstractmethod
     def get_title(self) -> str:
+        """Scrapes a title"""
         pass
 
     @abstractmethod
     def get_chapters_urls(self) -> list[str]:
-        """Parse the main page of our manga looking for chapter urls. returns a list by reading order (first, second, etc)"""
+        """Scrapes chapters urls. Returns a list of chapters urls by reading order (first, second, etc.)"""
         pass
 
     @abstractmethod
     def get_chapter_filename(self) -> str:
+        """Scrapes chapter name. Returns its path with '.zip' extension"""
         pass
 
     @abstractmethod
-    def get_image_urls(self) -> list[str]:
+    def get_images_urls(self) -> list[str]:
+        """Scrapes images urls"""
         pass
 
     @abstractmethod
     def download_image(self) -> None:
+        """Sends a get request and returns its content response in bytes"""
         pass
 
     # @abstractmethod
@@ -129,14 +138,14 @@ class Manganato(Downloader):
         chapter_path = os.path.join(self.directory_path, chapter_file)
         return chapter_path
 
-    def download_image(self, image_url: str) -> bytes:
-        response = requests.get(image_url, headers=self.get_headers())
-        return response.content
-
-    def get_image_urls(self, data: BeautifulSoup) -> list[str]:
+    def get_images_urls(self, data: BeautifulSoup) -> list[str]:
         images = data.find(class_="container-chapter-reader").find_all("img")
         images_src = [img["src"] for img in images]
         return images_src
+
+    def download_image(self, image_url: str) -> bytes:
+        response = requests.get(image_url, headers=self.get_headers())
+        return response.content
 
     def get_headers(self) -> dict[str, str]:
         basic_headers = super().get_headers().copy()
