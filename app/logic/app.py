@@ -52,10 +52,11 @@ class Downloader(ABC):
     def add_page(self, zipfile: ZipFile, image_index: int, image_url: str) -> None:
         image_data = self.download_image(image_url)
         image_basename = os.path.basename(image_url)
-        image_filename = f"{image_index:04}_{image_basename}"
+        formatted_image_name = utils.format_name(image_basename)
+        image_filename = f"{image_index:04}_{formatted_image_name}"
         zipfile.writestr(image_filename, image_data)
 
-    def download_chapter(self, chapter_url: str, index: int) -> None:
+    def download_chapter(self, index: int, chapter_url: str) -> None:
         data = BeautifulSoup(requests.get(chapter_url, headers=self.get_headers()).text, "html.parser")
         chapter_path = self.get_chapter_filename(index, data)
         images_url = self.get_image_urls(data)
@@ -66,7 +67,7 @@ class Downloader(ABC):
     def download_all_chapters(self) -> None:
         chapters_url = self.get_chapters_urls()
         for index, url in enumerate(chapters_url):
-            self.download_chapter(url, index)
+            self.download_chapter(index, url)
 
     @abstractmethod
     def get_title(self) -> str:
@@ -123,7 +124,8 @@ class Manganato(Downloader):
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="panel-chapter-info-top").find("h1").string
-        chapter_file = f"{index:04}_{chapter_title}.zip"
+        formatted_chapter_title = utils.format_name(chapter_title)
+        chapter_file = f"{index:04}_{formatted_chapter_title}.zip"
         chapter_path = os.path.join(self.directory_path, chapter_file)
         return chapter_path
 
