@@ -1,10 +1,6 @@
 # General
 pydantic
-
-# Backend
-fastapi[all]
 requests
 
 # Data Srapping and Parsing
 beautifulsoup4
-lxml
