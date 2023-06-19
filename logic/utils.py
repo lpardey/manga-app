@@ -16,7 +16,6 @@ def format_name(name: str) -> str:
     forbidden_chars = get_forbidden_chars()
     if not forbidden_chars:
         return name
-
     formatted_name = ""
     for char in name.strip():
         if char in forbidden_chars:
