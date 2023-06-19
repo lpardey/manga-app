@@ -3,7 +3,6 @@ import logging
 import os
 from abc import ABC, abstractmethod
 from zipfile import ZipFile
-import shutil
 
 # Dependencies
 import requests
@@ -26,7 +25,16 @@ class DownloaderExceptionMissingTitle(DownloaderException):
 
 
 class DownloaderExceptionUrlWithoutCoverage(DownloaderException):
-    def __init__(self, message: str = f"URL not registered in MangaDanga!") -> None:
+    def __init__(self, message: str = "URL not registered in MangaDanga!") -> None:
+        self.message = message
+        super().__init__(self.message)
+
+
+class DownloaderExceptionInvalidPattern(DownloaderException):
+    def __init__(
+        self,
+        message: str = "Invalid argument pattern. A valid pattern consists of two numbers where first one is smaller than the second ,e.g., '1-8'",
+    ) -> None:
         self.message = message
         super().__init__(self.message)
 
@@ -39,10 +47,14 @@ class Downloader(ABC):
     def __init__(
         self,
         web_data: BeautifulSoup,
+        chapters: list[int] | None = None,
+        chapter_range: list[int] | None = None,
         directory_path: str | None = None,
     ) -> None:
         super().__init__()
         self.web_data = web_data
+        self.chapters = chapters
+        self.chapter_range = chapter_range
         self.directory_path = directory_path if directory_path is not None else "."
 
     def get_directory_name(self) -> str:
@@ -55,7 +67,8 @@ class Downloader(ABC):
         """Creates a directory on the path specified (default path: '.'). Returns directory path"""
         dir_name = self.get_directory_name()
         path = os.path.join(self.directory_path, dir_name)
-        os.makedirs(path, exist_ok=True)
+        if not os.path.exists(path):
+            os.makedirs(path)
         return path
 
     def get_headers(self) -> dict[str, str]:
@@ -81,10 +94,21 @@ class Downloader(ABC):
 
     def mangadanga(self) -> None:
         """Creates a directory and downloads all chapters, in other words: MangaDanga!"""
-        directory_path = self.create_directory()
         chapters_url = self.get_chapters_urls()
-        for index, url in enumerate(chapters_url):
-            self.download_chapter(directory_path, index, url)
+        directory_path = self.create_directory()
+        if self.chapters:
+            for chapter_number in self.chapters:
+                index = chapter_number - 1
+                url = chapters_url[index]
+                self.download_chapter(directory_path, index, url)
+        elif self.chapter_range:
+            for chapter_number in range(self.chapter_range[0] - 1, self.chapter_range[1]):
+                index = chapter_number
+                url = chapters_url[index]
+                self.download_chapter(directory_path, index, url)
+        else:
+            for index, url in enumerate(chapters_url):
+                self.download_chapter(directory_path, index, url)
 
     @abstractmethod
     def get_title(self) -> str:
