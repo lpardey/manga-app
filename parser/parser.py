@@ -1,7 +1,11 @@
+import re
 from argparse import ArgumentParser
 from pydantic import BaseModel
 from urllib.parse import urlparse
-from logic.app import DownloaderExceptionNoChapters, DownloaderExceptionUrlWithoutCoverage
+from logic.app import (
+    DownloaderExceptionInvalidPattern,
+    DownloaderExceptionUrlWithoutCoverage,
+)
 
 
 VALID_URLS = {"chapmanganato.com"}
@@ -9,11 +13,11 @@ VALID_URLS = {"chapmanganato.com"}
 
 class MangaDanga(BaseModel):
     name: str = "MangaDanga"
-    description: str = "Download your favorite graphic novels. Enter the url where the novel is, a directory named after the novel will be created and zip files will be created for each chapter of the novel with its corresponding images. By default, the downloaded files will be stored where you execute the program. Enjoy!"
-    usage: str = "%(prog)s [options]"
+    description: str = "Download your favorite graphic novels by entering its url. A directory named after the novel will be created along with zip files for its chapter/s with its corresponding images. By default, the downloaded files will be stored where you execute the program. Enjoy!"
     epilog: str = "Chachi"
-    chapter_help: str = (
-        "Display the chapter or group of chapters required to download. Use '-' to denote a group e.g., 1-5"
+    chapter_help: str = "Display the chapter/s required to download. It takes one or more numbers"
+    range_chapters_help: str = (
+        "Display the range of chapters required to download. It takes two numbers, the first smaller than the second"
     )
 
 
@@ -21,13 +25,14 @@ def get_parser() -> ArgumentParser:
     program = MangaDanga()
     parser = ArgumentParser(
         prog=program.name,
-        usage=program.usage,
         description=program.description,
         epilog=program.epilog,
     )
+    group = parser.add_mutually_exclusive_group()
     parser.add_argument("url", help="Display a url of the graphic novel to download")
-    parser.add_argument("-c", "--chapters", nargs="*", help=program.chapter_help)
     parser.add_argument("-t", "--threads", default=0, type=int, help="Display a number of threads to use")
+    group.add_argument("-c", "--chapter", nargs="+", type=int, help=program.chapter_help)
+    group.add_argument("-r", "--chapter_range", nargs=2, type=int, help=program.range_chapters_help)
     return parser
 
 
@@ -39,13 +44,10 @@ def parse_url(url: str) -> str | None:
         raise DownloaderExceptionUrlWithoutCoverage()
 
 
-def parse_chapters(chapters: list[str] | None) -> list[str, list[str]] | None:
-    if not chapters:
-        if isinstance(chapters, list):
-            raise DownloaderExceptionNoChapters()
-        else:
-            return None
-    for i in range(len(chapters)):
-        if not chapters[i].isnumeric():
-            chapters[i] = chapters[i].split("-")
-    return chapters
+def parse_chapter_range(chapter_range: list[int] | None) -> list[int] | None:
+    if not chapter_range:
+        return None
+    valid_pattern = chapter_range[1] > chapter_range[0]
+    if not valid_pattern:
+        raise DownloaderExceptionInvalidPattern()
+    return chapter_range
