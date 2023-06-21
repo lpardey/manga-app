@@ -40,10 +40,10 @@ def get_parser() -> ArgumentParser:
     return parser
 
 
-def parse_url(url: str) -> str:
+def parse_url(url: str) -> tuple[str,str]:
     domain = urllib.parse.urlparse(url).netloc
     if domain in VALID_URLS:
-        return url
+        return url, domain
     else:
         raise DownloaderExceptionUrlWithoutCoverage()
 
