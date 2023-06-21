@@ -6,5 +6,5 @@ import requests
 @pytest.fixture()
 def web_data_main_page() -> BeautifulSoup:
     html_doc = requests.get("https://chapmanganato.com/manga-uh955964").text
-    web_data_main_page = BeautifulSoup(html_doc, "lxml")
+    web_data_main_page = BeautifulSoup(html_doc, "html.parser")
     return web_data_main_page
