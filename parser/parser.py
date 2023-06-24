@@ -8,7 +8,7 @@ from pydantic import BaseModel
 # From apps
 from logic.utils import DownloaderExceptionInvalidPattern, DownloaderExceptionUrlWithoutCoverage
 
-VALID_URLS = {"chapmanganato.com", "www.mangatown.com"}
+VALID_DOMAINS = {"chapmanganato.com", "manganato.com", "www.mangatown.com", "www.mngdoom.com"}
 
 
 class MangaDanga(BaseModel):
@@ -42,7 +42,7 @@ def get_parser() -> ArgumentParser:
 
 def parse_url(url: str) -> tuple[str, str]:
     domain = urllib.parse.urlparse(url).netloc
-    if domain in VALID_URLS:
+    if domain in VALID_DOMAINS:
         return url, domain
     else:
         raise DownloaderExceptionUrlWithoutCoverage()
