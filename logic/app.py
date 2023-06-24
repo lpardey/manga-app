@@ -2,6 +2,7 @@
 import logging
 import os
 from abc import ABC, abstractmethod
+from pathlib import PurePath
 from zipfile import ZipFile
 
 # Dependencies
@@ -14,48 +15,23 @@ from . import utils
 logger = logging.getLogger(__name__)
 
 
-class DownloaderException(Exception):
-    pass
-
-
-class DownloaderExceptionMissingTitle(DownloaderException):
-    def __init__(self, message: str = "Couldn't retrieve the graphic novel's title from the website") -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
-class DownloaderExceptionUrlWithoutCoverage(DownloaderException):
-    def __init__(self, message: str = "URL not registered in MangaDanga!") -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
-class DownloaderExceptionInvalidPattern(DownloaderException):
-    def __init__(
-        self,
-        message: str = "Invalid argument pattern. A valid pattern consists of two numbers where first one is smaller than the second ,e.g., '1-8'",
-    ) -> None:
-        self.message = message
-        super().__init__(self.message)
-
-
-class DownloaderExceptionUnexpected(DownloaderException):
-    pass
-
-
 class Downloader(ABC):
+    url: str
+    domain: str
+    extra_headers: str
+
     def __init__(
         self,
         web_data: BeautifulSoup,
+        directory_path: str,
         chapters: list[int] | None = None,
         chapter_range: list[int] | None = None,
-        directory_path: str | None = None,
     ) -> None:
         super().__init__()
         self.web_data = web_data
         self.chapters = chapters
         self.chapter_range = chapter_range
-        self.directory_path = directory_path if directory_path is not None else "."
+        self.directory_path = directory_path
 
     def get_directory_name(self) -> str:
         """Scrapes a title from website and returns it in an suitable format"""
@@ -67,12 +43,14 @@ class Downloader(ABC):
         """Creates a directory on the path specified (default path: '.'). Returns directory path"""
         dir_name = self.get_directory_name()
         path = os.path.join(self.directory_path, dir_name)
-        if not os.path.exists(path):
+        if not os.path.isdir(path):
             os.makedirs(path)
         return path
 
     def get_headers(self) -> dict[str, str]:
-        return dict()
+        basic_headers = dict()
+        basic_headers.update(self.extra_headers)
+        return basic_headers
 
     def add_image(self, zipfile: ZipFile, image_index: int, image_url: str) -> None:
         """Adds an image to a zip file"""
@@ -94,21 +72,27 @@ class Downloader(ABC):
 
     def mangadanga(self) -> None:
         """Creates a directory and downloads all chapters, in other words: MangaDanga!"""
-        chapters_url = self.get_chapters_urls()
+        chapter_numbers_to_url = self.get_chapter_numbers_to_urls()
         directory_path = self.create_directory()
-        if self.chapters:
-            for chapter_number in self.chapters:
-                index = chapter_number - 1
-                url = chapters_url[index]
-                self.download_chapter(directory_path, index, url)
-        elif self.chapter_range:
-            for chapter_number in range(self.chapter_range[0] - 1, self.chapter_range[1]):
-                index = chapter_number
-                url = chapters_url[index]
-                self.download_chapter(directory_path, index, url)
-        else:
-            for index, url in enumerate(chapters_url):
-                self.download_chapter(directory_path, index, url)
+        for index, url in chapter_numbers_to_url.items():
+            self.download_chapter(directory_path, index, url)
+
+    @classmethod
+    def get_downloader(
+        cls,
+        domain: str,
+        web_data: BeautifulSoup,
+        directory_path: str,
+        chapters: list[int] | None,
+        chapter_range: list[int] | None,
+    ) -> "Downloader":
+        match domain:
+            case Manganato.domain:
+                return Manganato(web_data, directory_path, chapters, chapter_range)
+            case Mangatown.domain:
+                return Mangatown(web_data, directory_path, chapters, chapter_range)
+            case _:
+                raise utils.DownloaderExceptionUnexpected()
 
     @abstractmethod
     def get_title(self) -> str:
@@ -116,7 +100,7 @@ class Downloader(ABC):
         pass
 
     @abstractmethod
-    def get_chapters_urls(self) -> list[str]:
+    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
         """Scrapes chapters urls. Returns a list of chapters urls by reading order (first, second, etc.)"""
         pass
 
@@ -135,42 +119,38 @@ class Downloader(ABC):
         """Sends a get request and returns its content response in bytes"""
         pass
 
-    # @abstractmethod
-    # def get_images_data(self) -> BeautifulSoup:
-    #     """Get images data and return it as a BeautifulSoup object"""
-    #     pass
-
-    # @abstractmethod
-    # def get_images(self) -> list[Image]:
-    #     """Parse images data and return a list of Image object"""
-    #     pass
-
-    # @abstractmethod
-    # def create_zip_file(path: str, chapters: list[Chapter]) -> None:
-    #     """Generate a zip file inside the directory for every chapter of the manga"""
-    #     # Create zip file
-    #     # Add chapter to zip file
-    #     pass
-
 
 class Manganato(Downloader):
-    EXTRA_HEADERS = {"Referer": "https://chapmanganato.com/"}
+    url = "https://manganato.com/"
+    domain = "chapmanganato.com"
+    extra_headers = {"Referer": "https://chapmanganato.com/"}
 
     def get_title(self) -> str:
         title_div = self.web_data.find(class_="story-info-right")
         title = title_div.find("h1").string
         return title
 
-    def get_chapters_urls(self) -> list[str]:
+    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
         chapter_links = self.web_data.find_all("a", class_="chapter-name")
         chapter_links.reverse()
-        chapters_urls = [data["href"] for data in chapter_links]
-        return chapters_urls
+        chapter_numbers_to_urls = {
+            float(PurePath(data["href"]).name.replace("chapter-", "")): data["href"] for data in chapter_links
+        }
+        if self.chapters:
+            chapter_numbers_to_urls = dict(filter(lambda i: i[0] in self.chapters, chapter_numbers_to_urls.items()))
+
+        if self.chapter_range:
+            chapter_numbers_to_urls = dict(
+                filter(
+                    lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_numbers_to_urls.items()
+                )
+            )
+        return chapter_numbers_to_urls
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="panel-chapter-info-top").find("h1").string
         formatted_chapter_title = utils.format_name(chapter_title)
-        chapter_file = f"{index:04}_{formatted_chapter_title}.zip"
+        chapter_file = f"{index}_{formatted_chapter_title}.zip"
         chapter_path = os.path.join(self.directory_path, chapter_file)
         return chapter_path
 
@@ -183,31 +163,54 @@ class Manganato(Downloader):
         response = requests.get(image_url, headers=self.get_headers())
         return response.content
 
-    def get_headers(self) -> dict[str, str]:
-        basic_headers = super().get_headers().copy()
-        basic_headers.update(self.EXTRA_HEADERS)
-        return basic_headers
 
-    # def get_images_data(self, url: str) -> BeautifulSoup:
-    #     html_doc = DownloaderClient.get_data(url).text
-    #     images_data = DownloaderClient.get_web_data(html_doc)
-    #     return images_data
+class Mangatown(Downloader):
+    url = "https://www.mangatown.com"
+    domain = "www.mangatown.com"
+    extra_headers = {"Referer": "https://www.mangatown.com/"}
 
-    # def get_images(self, chapter_url: str) -> list[Image]:
-    #     images_data = self.get_images_data(chapter_url)
-    #     scraped_data = images_data.select_one("div.container-chapter-reader").findChildren("img")
-    #     images = [
-    #         Image(number=index, source=data["src"], file=DownloaderClient.get_data(data["src"]).content)
-    #         for index, data in enumerate(scraped_data, start=1)
-    #     ]
-    #     return images
+    def get_title(self) -> str:
+        title = self.web_data.find(class_="title-top").string
+        return title
 
-    # def create_zip_file(self, dir_path: str, format: str, chapters: list[Chapter]) -> None:
-    #     for chapter in chapters:
-    #         file = f"{dir_path}/{chapter.number}. {chapter.name}.{format}"
-    #         with ZipFile(file, "a") as zipf:
-    #             for image in chapter.images:
-    #                 zipf.write(image.file, image.number)
+    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
+        partial_chapter_links = self.web_data.find(class_="chapter_list").find_all("a")
+        partial_chapter_links.reverse()
+        chapter_numbers_to_urls = {
+            float(PurePath(data["href"]).name.replace("c", "").lstrip("0")): f"{self.url}" + data["href"]
+            for data in partial_chapter_links
+        }
+        if self.chapters:
+            chapter_numbers_to_urls = dict(filter(lambda i: i[0] in self.chapters, chapter_numbers_to_urls.items()))
+
+        if self.chapter_range:
+            chapter_numbers_to_urls = dict(
+                filter(
+                    lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_numbers_to_urls.items()
+                )
+            )
+        return chapter_numbers_to_urls
+
+    def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
+        chapter_title = data.find(class_="title").find("h1").string
+        formatted_chapter_title = utils.format_name(chapter_title)
+        chapter_file = f"{index}_{formatted_chapter_title}.zip"
+        chapter_path = os.path.join(self.directory_path, chapter_file)
+        return chapter_path
+
+    def get_images_urls(self, data: BeautifulSoup) -> list[str]:
+        data.find(class_="page_select").find("option", string="Featured").extract()  # Unnecessary Ad element
+        options_tag = data.find(class_="page_select").find_all("option")
+        img_html_url = [self.url + url["value"] for url in options_tag]
+        images_src = [
+            "https:" + BeautifulSoup(requests.get(url).text, "html.parser").find(class_="read_img").find("img")["src"]
+            for url in img_html_url
+        ]
+        return images_src
+
+    def download_image(self, image_url: str) -> bytes:
+        response = requests.get(image_url, headers=self.get_headers())
+        return response.content
 
 
 # basic_headers = {
@@ -224,42 +227,3 @@ class Manganato(Downloader):
 #     "Cache-Control": "no-cache",
 #     "TE": "trailers",
 # }
-
-
-"""
-
-cuando tenemos un solo becario para hacer las cosas a mano:
-
-voy a manganto.com
-busco one piece
-Crea una carpeta para el manga
-para cada capitulo
-    crea una carpeta para ese capitulo
-    para cada imagen en el capitulo
-        descargar en esa carpeta
-    comprimir la carpeta en zip
-
-
-cuando tenemos 20 becarios para hacer las cosas a mano:
-
-voy a manganto.com
-busco one piece
-Crea una carpeta para el manga
-Crea una lista de urls de capitulos
-Divido el trabajo (cantidad de capitulos) entre el numero de becarios
-- resultado: 1000 capitulos entre 20 becarios: 50
-Cada becario se le asigna la cantidad de capitulos equivalente al resultado anterior, con eso debera:
-    Entrar a la web de sus capitulos (con la url del capitulo) y:
-        Descargar las imagenes del capitulo 
-        Comprimir la carpeta en zip correspondiente al capitulo
-
-
-funcion guardar capitulo comprimido: url de un capitulo -> produce un archivo zip en disco
-    navegar en la url
-    obtener el nombre del capitulo
-    obtener la lista de urls de imagenes
-    para cada imagen:
-        descargar
-    comprimir carpeta
-
-"""
