@@ -6,7 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 
 # From apps
-from logic.app import Downloader, Manganato
+from logic.app import Downloader
 
 
 def main() -> None:

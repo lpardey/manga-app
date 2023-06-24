@@ -12,6 +12,6 @@ Websites for request:
           - https://www.mangatown.com/
 
     Manwhas y Manhuas:
-          - https://www.asurascans.com/
-          - https://reaperscans.com/
+          - https://www.asurascans.com/ (Content encrypted)
+          - https://reaperscans.com/ (Content encrypted)
           - https://www.mngdoom.com/
