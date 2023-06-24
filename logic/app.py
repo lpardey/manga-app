@@ -17,8 +17,8 @@ logger = logging.getLogger(__name__)
 
 class Downloader(ABC):
     url: str
-    domain: str
-    extra_headers: str
+    domain: str | list[str]
+    extra_headers: dict[str, str]
 
     def __init__(
         self,
@@ -53,7 +53,7 @@ class Downloader(ABC):
         return basic_headers
 
     def add_image(self, zipfile: ZipFile, image_index: int, image_url: str) -> None:
-        """Adds an image to a zip file"""
+        """Adds image to a zip file"""
         image_data = self.download_image(image_url)
         image_basename = os.path.basename(image_url)
         formatted_image_name = utils.format_name(image_basename)
@@ -71,10 +71,10 @@ class Downloader(ABC):
                 self.add_image(zipf, image_index, image_url)
 
     def mangadanga(self) -> None:
-        """Creates a directory and downloads all chapters, in other words: MangaDanga!"""
-        chapter_numbers_to_url = self.get_chapter_numbers_to_urls()
+        """Creates a directory and downloads chapters, in other words: MangaDanga!"""
+        chapter_number_to_url = self.get_chapter_number_to_url()
         directory_path = self.create_directory()
-        for index, url in chapter_numbers_to_url.items():
+        for index, url in chapter_number_to_url.items():
             self.download_chapter(directory_path, index, url)
 
     @classmethod
@@ -86,13 +86,14 @@ class Downloader(ABC):
         chapters: list[int] | None,
         chapter_range: list[int] | None,
     ) -> "Downloader":
-        match domain:
-            case Manganato.domain:
-                return Manganato(web_data, directory_path, chapters, chapter_range)
-            case Mangatown.domain:
-                return Mangatown(web_data, directory_path, chapters, chapter_range)
-            case _:
-                raise utils.DownloaderExceptionUnexpected()
+        if any(True for downloader_domain in Manganato.domain if domain == downloader_domain):
+            return Manganato(web_data, directory_path, chapters, chapter_range)
+        elif domain == Mangatown.domain:
+            return Mangatown(web_data, directory_path, chapters, chapter_range)
+        elif domain == Mangadoom.domain:
+            return Mangadoom(web_data, directory_path, chapters, chapter_range)
+        else:
+            raise utils.DownloaderExceptionUnexpected("Couldn't get a downloader")
 
     @abstractmethod
     def get_title(self) -> str:
@@ -100,7 +101,7 @@ class Downloader(ABC):
         pass
 
     @abstractmethod
-    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
+    def get_chapter_number_to_url(self) -> dict[float, str]:
         """Scrapes chapters urls. Returns a list of chapters urls by reading order (first, second, etc.)"""
         pass
 
@@ -122,30 +123,28 @@ class Downloader(ABC):
 
 class Manganato(Downloader):
     url = "https://manganato.com/"
-    domain = "chapmanganato.com"
-    extra_headers = {"Referer": "https://chapmanganato.com/"}
+    domain = ["chapmanganato.com", "manganato.com"]
+    extra_headers = {"Referer": f"{url}"}
 
     def get_title(self) -> str:
         title_div = self.web_data.find(class_="story-info-right")
         title = title_div.find("h1").string
         return title
 
-    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
-        chapter_links = self.web_data.find_all("a", class_="chapter-name")
-        chapter_links.reverse()
-        chapter_numbers_to_urls = {
-            float(PurePath(data["href"]).name.replace("chapter-", "")): data["href"] for data in chapter_links
+    def get_chapter_number_to_url(self) -> dict[float, str]:
+        chapter_content = self.web_data.find(class_="panel-story-chapter-list").find_all("a")
+        chapter_content.reverse()
+        chapter_number_to_url = {
+            float(PurePath(data["href"]).name.replace("chapter-", "")): data["href"] for data in chapter_content
         }
         if self.chapters:
-            chapter_numbers_to_urls = dict(filter(lambda i: i[0] in self.chapters, chapter_numbers_to_urls.items()))
+            chapter_number_to_url = dict(filter(lambda i: i[0] in self.chapters, chapter_number_to_url.items()))
 
         if self.chapter_range:
-            chapter_numbers_to_urls = dict(
-                filter(
-                    lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_numbers_to_urls.items()
-                )
+            chapter_number_to_url = dict(
+                filter(lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_number_to_url.items())
             )
-        return chapter_numbers_to_urls
+        return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="panel-chapter-info-top").find("h1").string
@@ -165,31 +164,29 @@ class Manganato(Downloader):
 
 
 class Mangatown(Downloader):
-    url = "https://www.mangatown.com"
+    url = "https://www.mangatown.com/"
     domain = "www.mangatown.com"
-    extra_headers = {"Referer": "https://www.mangatown.com/"}
+    extra_headers = {"Referer": f"{url}"}
 
     def get_title(self) -> str:
         title = self.web_data.find(class_="title-top").string
         return title
 
-    def get_chapter_numbers_to_urls(self) -> dict[float, str]:
-        partial_chapter_links = self.web_data.find(class_="chapter_list").find_all("a")
-        partial_chapter_links.reverse()
-        chapter_numbers_to_urls = {
+    def get_chapter_number_to_url(self) -> dict[float, str]:
+        chapter_content = self.web_data.find(class_="chapter_list").find_all("a")
+        chapter_content.reverse()
+        chapter_number_to_url = {
             float(PurePath(data["href"]).name.replace("c", "").lstrip("0")): f"{self.url}" + data["href"]
-            for data in partial_chapter_links
+            for data in chapter_content
         }
         if self.chapters:
-            chapter_numbers_to_urls = dict(filter(lambda i: i[0] in self.chapters, chapter_numbers_to_urls.items()))
+            chapter_number_to_url = dict(filter(lambda i: i[0] in self.chapters, chapter_number_to_url.items()))
 
         if self.chapter_range:
-            chapter_numbers_to_urls = dict(
-                filter(
-                    lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_numbers_to_urls.items()
-                )
+            chapter_number_to_url = dict(
+                filter(lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_number_to_url.items())
             )
-        return chapter_numbers_to_urls
+        return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="title").find("h1").string
@@ -200,11 +197,11 @@ class Mangatown(Downloader):
 
     def get_images_urls(self, data: BeautifulSoup) -> list[str]:
         data.find(class_="page_select").find("option", string="Featured").extract()  # Unnecessary Ad element
-        options_tag = data.find(class_="page_select").find_all("option")
-        img_html_url = [self.url + url["value"] for url in options_tag]
+        data_options = data.find(class_="page_select").find_all("option")
+        html_doc = [self.url + url["value"] for url in data_options]
         images_src = [
             "https:" + BeautifulSoup(requests.get(url).text, "html.parser").find(class_="read_img").find("img")["src"]
-            for url in img_html_url
+            for url in html_doc
         ]
         return images_src
 
@@ -213,17 +210,45 @@ class Mangatown(Downloader):
         return response.content
 
 
-# basic_headers = {
-#     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/113.0",
-#     "Accept": "image/avif,image/webp,*/*",
-#     "Accept-Language": "en-US,en;q=0.5",
-#     "Accept-Encoding": "gzip, deflate, br",
-#     "Connection": "keep-alive",
-#     "Referer": "https://chapmanganato.com/",
-#     "Sec-Fetch-Dest": "image",
-#     "Sec-Fetch-Mode": "no-cors",
-#     "Sec-Fetch-Site": "cross-site",
-#     "Pragma": "no-cache",
-#     "Cache-Control": "no-cache",
-#     "TE": "trailers",
-# }
+class Mangadoom(Downloader):
+    url = "https://www.mngdoom.com/"
+    domain = "www.mngdoom.com"
+    extra_headers = {"Referer": f"{url}"}
+
+    def get_title(self) -> str:
+        title_div = self.web_data.find(class_="widget-heading")
+        title = title_div.string
+        return title
+
+    def get_chapter_number_to_url(self) -> dict[float, str]:
+        chapter_content = self.web_data.find(class_="chapter-list").find_all("a")
+        chapter_content.reverse()
+        chapter_number_to_url = {float(PurePath(data["href"]).name): data["href"] for data in chapter_content}
+        if self.chapters:
+            chapter_number_to_url = dict(filter(lambda i: i[0] in self.chapters, chapter_number_to_url.items()))
+
+        if self.chapter_range:
+            chapter_number_to_url = dict(
+                filter(lambda i: self.chapter_range[0] <= i[0] <= self.chapter_range[1], chapter_number_to_url.items())
+            )
+        return chapter_number_to_url
+
+    def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
+        chapter_title = data.find(class_="col-md-8 col-xs-12").text.strip()
+        formatted_chapter_title = utils.format_name(chapter_title)
+        chapter_file = f"{index}_{formatted_chapter_title}.zip"
+        chapter_path = os.path.join(self.directory_path, chapter_file)
+        return chapter_path
+
+    def get_images_urls(self, data: BeautifulSoup) -> list[str]:
+        data_options = data.find(class_="selectPage pull-right chapter-page1").find_all("option")
+        html_doc = [url["value"] for url in data_options]
+        images_src = [
+            BeautifulSoup(requests.get(url).text, "html.parser").find(class_="img-responsive")["src"]
+            for url in html_doc
+        ]
+        return images_src
+
+    def download_image(self, image_url: str) -> bytes:
+        response = requests.get(image_url, headers=self.get_headers())
+        return response.content
