@@ -1,5 +1,6 @@
 # Standard Library
 import platform
+from pathlib import PurePath
 
 
 class DownloaderException(Exception):
@@ -46,3 +47,16 @@ def format_name(name: str) -> str:
         else:
             formatted_name += char
     return formatted_name
+
+
+def get_src_numbers_suffix(src: str) -> str:
+    src_stem = PurePath(src).stem
+    suffix = []
+    for character in reversed(src_stem):
+        if character.isnumeric():
+            suffix.append(character)
+        else:
+            break
+    suffix.reverse()
+    src_numbers_suffix = "".join(suffix)
+    return src_numbers_suffix
