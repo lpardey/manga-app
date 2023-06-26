@@ -189,6 +189,20 @@ class Mangatown(Downloader):
         return chapter_path
 
     def get_images_src(self, data: BeautifulSoup) -> list[str]:
+        try:
+            data.find(class_="page_select").find("option", string="Featured").extract()  # Unnecessary Ad element
+            number_of_imgs = len(data.find(class_="page_select").find_all("option"))
+            first_img_src = "https:" + data.find(class_="read_img").find("img")["src"]
+            src_numbers_suffix = utils.get_src_numbers_suffix(first_img_src)
+            images_src = [first_img_src]
+            for i in range(1, number_of_imgs):
+                new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
+                images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
+        except:
+            images_src = self.get_images_src_exhaustive_search(data)
+        return images_src
+
+    def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:
         data.find(class_="page_select").find("option", string="Featured").extract()  # Unnecessary Ad element
         data_options = data.find(class_="page_select").find_all("option")
         html_doc = [self.url + url["value"] for url in data_options]
@@ -197,18 +211,6 @@ class Mangatown(Downloader):
             for url in html_doc
         ]
         return images_src
-
-    # Improved version but may break esaily to do website design
-    # def get_images_src(self, data: BeautifulSoup) -> list[str]:
-    #     data.find(class_="page_select").find("option", string="Featured").extract()  # Unnecessary Ad element
-    #     number_of_imgs = len(data.find(class_="page_select").find_all("option"))
-    #     first_img_src = "https:" + data.find(class_="read_img").find("img")["src"]
-    #     src_numbers_suffix = utils.get_src_numbers_suffix(first_img_src)
-    #     images_src = [first_img_src]
-    #     for i in range(1, number_of_imgs):
-    #         new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
-    #         images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
-    #     return images_src
 
 
 class Mangadoom(Downloader):
@@ -238,22 +240,24 @@ class Mangadoom(Downloader):
         chapter_path = os.path.join(self.directory_path, chapter_file)
         return chapter_path
 
-    # def get_images_src(self, data: BeautifulSoup) -> list[str]:
-    #     data_options = data.find(class_="selectPage pull-right chapter-page1").find_all("option")
-    #     html_doc = [url["value"] for url in data_options]
-    #     images_src = [
-    #         BeautifulSoup(requests.get(url).text, "html.parser").find(class_="img-responsive")["src"]
-    #         for url in html_doc
-    #     ]
-    #     return images_src
-
-    # Improved version but may break esaily, it depends on the website design
     def get_images_src(self, data: BeautifulSoup) -> list[str]:
-        number_of_imgs = len(data.find(class_="selectPage pull-right chapter-page1").find_all("option"))
-        first_img_src = data.find(class_="img-responsive")["src"]
-        src_numbers_suffix = utils.get_src_numbers_suffix(first_img_src)
-        images_src = [first_img_src]
-        for i in range(1, number_of_imgs):
-            new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
-            images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
+        try:
+            number_of_imgs = len(data.find(class_="selectPage pull-right chapter-page1").find_all("option"))
+            first_img_src = data.find(class_="img-responsive")["src"]
+            src_numbers_suffix = utils.get_src_numbers_suffix(first_img_src)
+            images_src = [first_img_src]
+            for i in range(1, number_of_imgs):
+                new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
+                images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
+        except:
+            images_src = self.get_images_src_exhaustive_search(data)
+        return images_src
+
+    def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:
+        data_options = data.find(class_="selectPage pull-right chapter-page1").find_all("option")
+        html_doc = [url["value"] for url in data_options]
+        images_src = [
+            BeautifulSoup(requests.get(url).text, "html.parser").find(class_="img-responsive")["src"]
+            for url in html_doc
+        ]
         return images_src
