@@ -1,25 +1,35 @@
-# Standard Library
-from parser.parser import get_parser, parse_chapter_range, parse_url
+import logging
+import sys
+import asyncio
 
-# Dependencies
-import requests
-from bs4 import BeautifulSoup
+from .downloader import (
+    DownloaderConfig,
+    chapters_selection_factory,
+    downloader_factory,
+)
+from .parser import get_parser
 
-# From apps
-from logic.app import Downloader
+
+logger = logging.getLogger("MangaDanga")
+
+
+def get_config(argv: list[str] = sys.argv[1:]) -> DownloaderConfig:
+    parser = get_parser()
+    args = parser.parse_args(argv)
+    logger.info(args)
+    chapters = chapters_selection_factory(args.chapters, args.chapter_range)
+    downloader_config = DownloaderConfig(
+        url=args.url, path=args.path, chapters_selection=chapters, threads=args.threads
+    )
+    return downloader_config
 
 
 def main() -> None:
-    parser = get_parser()
-    args = parser.parse_args()
-    url, domain = parse_url(args.url)
-    directory_path = args.path
-    chapters = args.chapter
-    chapter_range = parse_chapter_range(args.chapter_range)
-    html_doc = requests.get(url).text
-    web_data = BeautifulSoup(html_doc, "html.parser")
-    downloader = Downloader.get_downloader(domain, web_data, directory_path, chapters, chapter_range)
-    downloader.mangadanga()
+    logging.basicConfig(level=logging.INFO)
+    config = get_config()
+    logger.info(f"Using configuration: {config}")
+    downloader = downloader_factory(config)
+    asyncio.run(downloader.download())
 
 
 if __name__ == "__main__":
