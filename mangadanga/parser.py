@@ -1,8 +1,6 @@
 # Standard Library
 from argparse import ArgumentParser
 
-VALID_DOMAINS = {"chapmanganato.com", "manganato.com", "www.mangatown.com", "www.mngdoom.com"}
-
 
 PROGRAM_NAME = "MangaDanga"
 PROGRAM_DESCRIPTION = (
