@@ -7,8 +7,7 @@ import pytest
 from bs4 import BeautifulSoup
 
 
-# From apps
-from logic.app import Manganato
+from ...mangadanga.downloader.drivers import Manganato
 
 
 @mock.patch.object(Manganato, "get_directory_name")
