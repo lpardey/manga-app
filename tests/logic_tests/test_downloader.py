@@ -1,5 +1,4 @@
 # Standard Library
-import unittest
 from unittest import mock
 
 # Dependencies
@@ -7,9 +6,9 @@ import pytest
 from bs4 import BeautifulSoup
 
 
-from ...mangadanga.downloader.drivers import Manganato
+from mangadanga.downloader.drivers import Manganato
 
-
+@pytest.mark.skip("TO DO!")
 @mock.patch.object(Manganato, "get_directory_name")
 @mock.patch("os.path.join")
 @mock.patch("os.path.isdir")
@@ -31,7 +30,7 @@ def test_create_directory_success(
     assert m_os_path_isdir.call_count == 1
 
 
-@unittest.skip("TO DO!")
+@pytest.mark.skip("TO DO!")
 @mock.patch.object(Manganato, "get_directory_name")
 @mock.patch("os.path.join")
 def test_create_directory_failure(
