@@ -2,13 +2,14 @@ from typing import Type
 import urllib.parse
 from .exceptions import DownloaderExceptionUrlWithoutCoverage
 from .base import Downloader, DownloaderConfig
-from .drivers import Mangadoom, Manganato, Mangatown
+from .drivers import Mangadoom, Manganato, Mangatown, Asurascans
 
 
 DOWNLOADERS: set[Type[Downloader]] = {
     Mangadoom,
     Manganato,
     Mangatown,
+    Asurascans,
 }
 
 
