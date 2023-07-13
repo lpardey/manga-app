@@ -48,11 +48,15 @@ class Downloader(ABC):
             os.makedirs(path)
 
     def get_headers(self) -> dict[str, str]:
-        basic_headers = dict()
+        basic_headers = {"User-Agent": "Mozilla/5.0", "Accept-Encoding": "gzip, deflate"}
         basic_headers.update(self.EXTRA_HEADERS)
         return basic_headers
 
     def get_src_numbers_suffix(self, src: str) -> str:
+        """
+        receives an image url and returns the numbers at the end of the filename
+        example: https://example.com/image_001.jpg -> 001
+        """
         src_stem = PurePath(src).stem
         suffix = []
         for character in reversed(src_stem):
@@ -141,7 +145,7 @@ class Downloader(ABC):
         pass
 
     @abstractmethod
-    def get_images_src(self, data: BeautifulSoup) -> list[str]:
+    async def get_images_src(self, data: BeautifulSoup) -> list[str]:
         """Scrapes images urls"""
         pass
 
