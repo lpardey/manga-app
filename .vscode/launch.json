@@ -5,7 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Module",
+            "name": "GUI Mangadanga",
+            "type": "python",
+            "request": "launch",
+            "module": "mangadanga.main2",
+            "justMyCode": true
+        },
+        {
+            "name": "CLI Mangadanga",
             "type": "python",
             "request": "launch",
             "module": "mangadanga.main",
