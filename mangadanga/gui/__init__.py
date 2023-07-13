@@ -1,9 +1,9 @@
 from .style import GUIStyle
-from .widgets import GUIWidgets
+from .widgets import MainWindow
 from .mangadanga_gui import MangadangaGUI
 
 __all__ = [
     "GUIStyle",
-    "GUIWidgets",
+    "MainWindow",
     "MangadangaGUI",
 ]
