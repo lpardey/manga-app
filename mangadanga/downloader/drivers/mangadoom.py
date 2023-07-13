@@ -32,16 +32,16 @@ class Mangadoom(Downloader):
         return chapter_file
 
     async def get_images_src(self, data: BeautifulSoup) -> list[str]:
-        try:
-            number_of_imgs = len(data.find(class_="selectPage pull-right chapter-page1").find_all("option"))
-            first_img_src = data.find(class_="img-responsive")["src"]
-            src_numbers_suffix = self.get_src_numbers_suffix(first_img_src)
-            images_src = [first_img_src]
-            for i in range(1, number_of_imgs):
-                new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
-                images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
-        except:
-            images_src = await self.get_images_src_exhaustive_search(data)
+        # try:
+        #     number_of_imgs = len(data.find(class_="selectPage pull-right chapter-page1").find_all("option"))
+        #     first_img_src = data.find(class_="img-responsive")["src"]
+        #     src_numbers_suffix = self.get_src_numbers_suffix(first_img_src)
+        #     images_src = [first_img_src]
+        #     for i in range(1, number_of_imgs):
+        #         new_suffix = str(int(src_numbers_suffix) + i).zfill(len(src_numbers_suffix))
+        #         images_src.append(first_img_src.replace(src_numbers_suffix, new_suffix))
+        # except:
+        images_src = await self.get_images_src_exhaustive_search(data)
         return images_src
 
     async def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:

@@ -31,7 +31,7 @@ class Manganato(Downloader):
         chapter_filename = f"{index}_{formatted_chapter_title}.zip"
         return chapter_filename
 
-    def get_images_src(self, data: BeautifulSoup) -> list[str]:
+    async def get_images_src(self, data: BeautifulSoup) -> list[str]:
         images = data.find(class_="container-chapter-reader").find_all("img")
         images_src = [img["src"] for img in images]
         return images_src
