@@ -4,6 +4,7 @@ from .drivers import (
     Mangadoom,
     Manganato,
     Mangatown,
+    Asurascans,
 )
 
 from .chapter_selection import (
@@ -35,6 +36,7 @@ __all__ = [
     "Mangadoom",
     "Manganato",
     "Mangatown",
+    "Asurascans",
     # .chapter_selection
     "ChapterSelectionStrategy",
     "AllChaptersSelection",
