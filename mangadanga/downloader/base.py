@@ -27,8 +27,7 @@ class Downloader(ABC):
         super().__init__()
         self.config = config
 
-    async def scrap_main_url(self, url: str | None) -> BeautifulSoup:
-        url = url if url else self.config.url
+    async def scrap_url(self, url: str) -> BeautifulSoup:
         # crea un gestor de contextos para hacer la request
         async with aiohttp.ClientSession(headers=self.get_headers()) as session:
             async with session.get(url) as response:
@@ -106,15 +105,8 @@ class Downloader(ABC):
         for image_filename, image_data in images:
             zipf.writestr(image_filename, image_data)
 
-    async def get_chapter_data(self, url) -> BeautifulSoup:
-        async with aiohttp.ClientSession(headers=self.get_headers()) as session:
-            async with session.get(url) as response:
-                html_doc = await response.text()
-                chapter_data = BeautifulSoup(html_doc, "html.parser")
-                return chapter_data
-
-    async def process_chapter(self, index: int, url: str, manga_title: str) -> None:
-        chapter_data = await self.get_chapter_data(url)
+    async def process_chapter(self, index: int, chapter_url: str, manga_title: str) -> None:
+        chapter_data = await self.scrap_url(chapter_url)
         chapter_filename = self.get_chapter_filename(index, chapter_data)
         chapter_full_path = os.path.join(self.config.path, manga_title, chapter_filename)
         logger.info(f"Downloading chapter: {chapter_filename}")
@@ -123,7 +115,7 @@ class Downloader(ABC):
 
     async def download(self) -> None:
         """Creates a directory and downloads chapters, in other words: MangaDanga!"""
-        web_data = await self.scrap_main_url(url=None)
+        web_data = await self.scrap_url(self.config.url)
         title = self.get_title(web_data)
         sanitized_title = utils.format_name(title)
         self.create_directory(sanitized_title)
