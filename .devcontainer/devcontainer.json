@@ -33,13 +33,15 @@
 				},
 				"editor.formatOnSave": true,
 				"files.autoSave": "afterDelay",
-				"files.autoSaveDelay": 1000
+				"files.autoSaveDelay": 1000,
+				"extensions.verifySignature": false
 			},
 			"extensions": [
 				"ms-python.python",
 				"littlefoxteam.vscode-python-test-adapter",
 				"ms-vsliveshare.vsliveshare",
-				"mhutchie.git-graph"
+				"mhutchie.git-graph",
+				"ms-toolsai.jupyter-keymap"
 			]
 		}
 	}
