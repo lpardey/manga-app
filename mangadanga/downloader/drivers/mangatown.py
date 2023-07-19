@@ -92,6 +92,6 @@ class Mangatown(Downloader):
 
     async def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:
         data_options = data.find(class_="page_select").find_all("option")
-        chapter_data = [await self.scrap_main_url(self.URL + url["value"]) for url in data_options]
+        chapter_data = [await self.scrape_url(self.URL + url["value"]) for url in data_options]
         images_src = ["https:" + data.find(class_="read_img").find("img")["src"] for data in chapter_data]
         return images_src

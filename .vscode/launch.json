@@ -8,14 +8,14 @@
             "name": "GUI Mangadanga",
             "type": "python",
             "request": "launch",
-            "module": "mangadanga.main2",
+            "module": "mangadanga.main_gui",
             "justMyCode": true
         },
         {
             "name": "CLI Mangadanga",
             "type": "python",
             "request": "launch",
-            "module": "mangadanga.main",
+            "module": "mangadanga.main_cli",
             "args": [
                 "https://www.mangatown.com/manga/full_metal_alchemist/",
                 "-t",

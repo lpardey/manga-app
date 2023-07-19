@@ -46,6 +46,6 @@ class Mangadoom(Downloader):
 
     async def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:
         data_options = data.find(class_="selectPage pull-right chapter-page1").find_all("option")
-        chapter_data = [await self.scrap_main_url(url["value"]) for url in data_options]
+        chapter_data = [await self.scrape_url(url["value"]) for url in data_options]
         images_src = [data.find(class_="img-responsive")["src"] for data in chapter_data]
         return images_src
