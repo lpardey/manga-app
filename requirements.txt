@@ -6,3 +6,4 @@ requests
 
 # Data Srapping and Parsing
 beautifulsoup4
+requests-html
