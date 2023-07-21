@@ -1,123 +1,49 @@
 import asyncio
 import tkinter
 from tkinter import Misc, ttk, filedialog, messagebox
-from mangadanga.downloader import downloader_factory, chapters_selection_factory, DownloaderConfig
-from typing import Any, Callable
-
-
-# class EventEmitter:
-#     def __init__(self) -> None:
-#         self.listeners: dict[str, list[Callable[..., Any]]] = {}
-
-#     def add_listener(self, event: str, listener: Callable[..., Any]) -> None:
-#         if event not in self.listeners:
-#             self.listeners[event] = []
-#         self.listeners[event].append(listener)
-
-#     def emit(self, event: str, *args: Any, **kwargs: Any) -> None:
-#         if event not in self.listeners:
-#             return
-#         for listener in self.listeners[event]:
-#             listener(*args, **kwargs)
-
-
-# EVENT_EMITTER = EventEmitter()
-
-
-# def mi_cosa(config: Config) -> None:
-#     print(config)
-
-
-# EVENT_EMITTER.add_listener(
-#     "download_button_clicked", lambda config: asyncio.run(downloader_factory(config).download())
-# )
-
-# EVENT_EMITTER.emit("progress_update", id, progress)
+from mangadanga.downloader import downloader_factory, DownloaderConfig
+from typing import Callable
 import logging
+from ..downloader.config import ChapterStrategyConfig
+from ..downloader.exceptions import DownloaderException
+from .utils import validate_non_empty, validate_numeric
+from concurrent import futures
 
 logger = logging.getLogger("MangaDanga-GUI")
 
+thread_pool_executor = futures.ThreadPoolExecutor(max_workers=1)
+
 
 class MainWindow:
-    def __init__(self, container: Misc, config: DownloaderConfig) -> None:
-        self.config = config
+    def __init__(self, container: Misc, init_config: DownloaderConfig) -> None:
+        self.init_config = init_config
         self.top_banner = TopBanner(container)
-        self.main_tabs = NotebookComponent(container, config, self.handle_browse_button)
-        self.download_button = DownloadButton(container, self.handle_download_button)
-
-    def handle_download_button(self) -> None:
-        config = self.get_config()
-        downloader = downloader_factory(config)
-        # EVENT_EMITTER.emit("download_button_clicked", config)
-        try:
-            asyncio.run(downloader.download())
-            messagebox.showinfo(title="MangaDanga", message="Mandanga completed!")
-        except Exception as e:
-            logger.exception(e)
-            messagebox.showerror(
-                title="Error!",
-                message=f"Something unexpected happened: {e}",
-            )
-
-    def handle_browse_button(self) -> None:
-        save_to_path = filedialog.askdirectory(initialdir=self.config.path)
-        self.field_missing(field=save_to_path, name="'Save to'")
-        self.main_tabs.download_tab.local_path_component.path_value.set(save_to_path)
+        self.main_tabs = NotebookComponent(container, init_config)
+        self.download_button = DownloadButton(container, self.get_config)
+        self.window_general_management(container)
 
     def get_config(self) -> DownloaderConfig:
-        url = self.field_missing(self.main_tabs.download_tab.url_component.url_value.get(), "'URL'")
-        path = self.field_missing(self.main_tabs.download_tab.local_path_component.path_value.get(), "'Path'")
-        chapter, chapter_range = self.get_chapter_and_chapter_range(
-            self.main_tabs.settings_tab.download_management.radio_input.get(),
-            self.main_tabs.settings_tab.download_management.chapter_list_input.get(),
-            self.main_tabs.settings_tab.download_management.chapter_range_lower_bound_input.get(),
-            self.main_tabs.settings_tab.download_management.chapter_range_upper_bound_input.get(),
-        )
-        chapter_strategy = chapters_selection_factory(chapter, chapter_range)
-        threads = int(self.field_missing(self.main_tabs.settings_tab.multithreading.combo_box.get(), "'Threads'"))
-        self.config.update_config_attrs(url, path, chapter_strategy, threads)
-        return self.config
+        url = self.main_tabs.download_tab.url_component.url_value.get()
+        validate_non_empty(url, "'URL'")
+        path = self.main_tabs.download_tab.local_path_component.path_value.get()
+        validate_non_empty(path, "'Save to'")
+        raw_threads = self.main_tabs.settings_tab.multithreading.combo_box.get()
+        validate_non_empty(raw_threads, "'Threads'")
+        validate_numeric(raw_threads, "'Threads'")
+        threads = int(raw_threads)
+        chapter_strategy_config = self.main_tabs.settings_tab.download_management.get_chapter_selection_strategy()
+        config = DownloaderConfig(url=url, path=path, chapter_strategy=chapter_strategy_config, threads=threads)
+        return config
 
-        # start_button.state(["disabled"]) if not url else start_button.state(["active"])
+    def window_general_management(self, container: Misc) -> None:
+        container.bind("<Escape>", lambda e: self.quit(container))
+        container.protocol("WM_DELETE_WINDOW", lambda: self.quit(container))
 
-    def field_missing(self, field: str, name: str) -> str:
-        if not field:
-            raise Exception(messagebox.showwarning(title="Warning!", message=f"{name} field is missing."))
-        else:
-            return field
-
-    def get_chapter_and_chapter_range(
-        self,
-        radiobutton_selection: int,
-        chapter_input: str,
-        chapter_range_lower_bound: str,
-        chapter_range_upper_bound: str,
-    ) -> tuple[None, None] | tuple[list[str], None] | tuple[None, tuple[str, str]]:
-        chapter = None
-        chapter_range = None
-        if radiobutton_selection == 0:
-            if any([chapter_input, chapter_range_lower_bound, chapter_range_upper_bound]):
-                raise Exception(
-                    messagebox.showerror(
-                        title="Error!", message=f"'Chapter/s' and 'Chapter range' fields must be empty for this option"
-                    )
-                )
-        elif radiobutton_selection == 1:
-            if any([chapter_range_lower_bound, chapter_range_upper_bound]):
-                raise Exception(
-                    messagebox.showerror(
-                        title="Error!", message=f"'Chapter range' fields must be empty for this option"
-                    )
-                )
-            chapter = self.field_missing(chapter_input, "'Chapter/s'").split(" ")
-        elif radiobutton_selection == 2:
-            chapter_range = tuple(
-                [
-                    self.field_missing(chapter_range_lower_bound, "'Chapter range lower bound'"),
-                    self.field_missing(chapter_range_upper_bound, "'Chapter range upper bound'"),
-                ]
-            )
-        return chapter, chapter_range
+    @staticmethod
+    def quit(container: Misc) -> None:
+        exit = messagebox.askyesno(title="Exit", message="Do you want to exit MangaDanga?")
+        if exit:
+            container.destroy()
 
 
 class TopBanner:
@@ -132,21 +58,43 @@ class TopBanner:
 
 
 class NotebookComponent:
-    def __init__(self, container: Misc, config: DownloaderConfig, handle_click: Callable) -> None:
+    def __init__(self, container: Misc, init_config: DownloaderConfig) -> None:
         self.notebook = ttk.Notebook(container, style="TNotebook")
         self.notebook.grid(row=1, column=0)
-        self.download_tab = DownloadTab(self.notebook, config, handle_click)
-        self.settings_tab = SettingsTab(self.notebook, config)
+        self.download_tab = DownloadTab(self.notebook, init_config)
+        self.settings_tab = SettingsTab(self.notebook, init_config)
 
 
 class DownloadButton:
-    def __init__(self, container: Misc, handle_click: Callable) -> None:
-        self.button = ttk.Button(container, text="Download", command=handle_click, width=15, style="TButton")
+    def __init__(self, container: Misc, get_config: Callable) -> None:
+        self.container = container
+        self.button = ttk.Button(
+            container,
+            text="Download",
+            command=self.handle_download_button,
+            width=15,
+            style="TButton",
+        )
         self.button.grid(row=2, column=0, ipady=1, padx=10, pady=10)
+        self.get_config = get_config
+        self.button.bind("<Return>", lambda e: self.handle_download_button())
+
+    def handle_download_button(self) -> None:
+        try:
+            config = self.get_config()
+            downloader = downloader_factory(config)
+            asyncio.run(downloader.download())
+            messagebox.showinfo(title="MangaDanga", message="Mandanga completed!")
+        except DownloaderException as e:
+            logger.exception(e)
+            messagebox.showwarning(title="Warning!", message=e)
+        except Exception as e:
+            logger.exception(e)
+            messagebox.showerror(title="Error!", message=f"Something unexpected happened: {e}")
 
 
 class DownloadTab:
-    def __init__(self, container: ttk.Notebook, config: DownloaderConfig, handle_click: Callable) -> None:
+    def __init__(self, container: ttk.Notebook, init_config: DownloaderConfig) -> None:
         self.frame = ttk.Frame(container, style="TFrame")
         self.frame.columnconfigure(0, weight=1)
         self.frame.columnconfigure(1, weight=1)
@@ -156,7 +104,7 @@ class DownloadTab:
         container.add(self.frame, text="Download")
 
         self.url_component = UrlComponent(self.frame)
-        self.local_path_component = LocalPathComponent(self.frame, config, handle_click)
+        self.local_path_component = LocalPathComponent(self.frame, init_config)
 
 
 class UrlComponent:
@@ -177,21 +125,40 @@ class UrlComponent:
 
 
 class LocalPathComponent:
-    def __init__(self, container: Misc, config: DownloaderConfig, handle_click: Callable) -> None:
+    def __init__(self, container: Misc, init_config: DownloaderConfig) -> None:
+        self.init_config = init_config
         self.label_frame = ttk.Labelframe(container, text="Save to", style="TLabelframe")
         self.label_frame.grid(row=1, column=0, padx=10, pady=10, sticky="NEW")
-        self.path_value = tkinter.StringVar(value=config.path)
+        self.path_value = tkinter.StringVar(value=self.init_config.path)
         self.text = ttk.Entry(
             self.label_frame, textvariable=self.path_value, width=36, font=("consolas", 8), style="TEntry"
         )
         self.text.grid(row=1, column=0, ipady=2, padx=10, pady=10, sticky="NEW")
-
-        self.button = ttk.Button(self.label_frame, text="Browse", command=handle_click, width=9, style="TButton")
+        self.button = ttk.Button(
+            self.label_frame,
+            text="Browse",
+            command=self.handle_browse_button,
+            width=9,
+            style="TButton",
+        )
         self.button.grid(row=1, column=1, ipady=1, padx=10, pady=10)
+        self.button.bind("<Return>", lambda e: self.handle_browse_button())
+
+    def handle_browse_button(self) -> None:
+        try:
+            save_to_path = filedialog.askdirectory(initialdir=self.init_config.path)
+            validate_non_empty(field=save_to_path, name="'Save to'")
+        except DownloaderException as e:
+            logger.exception(e)
+            messagebox.showwarning(title="Warning!", message=e)
+        except Exception as e:
+            logger.exception(e)
+            messagebox.showerror(title="Error!", message=f"Something unexpected happened: {e}")
+        self.path_value.set(save_to_path)
 
 
 class SettingsTab:
-    def __init__(self, container: ttk.Notebook, config: DownloaderConfig) -> None:
+    def __init__(self, container: ttk.Notebook, init_config: DownloaderConfig) -> None:
         self.frame = ttk.Frame(container, style="TFrame")
         self.frame.columnconfigure(0, weight=1)
         self.frame.columnconfigure(1, weight=1)
@@ -199,7 +166,7 @@ class SettingsTab:
         container.add(self.frame, text="Settings")
 
         self.download_management = DownloadManagementComponent(self.frame)
-        self.multithreading = MultithreadingComponent(self.frame, config)
+        self.multithreading = MultithreadingComponent(self.frame, init_config)
 
 
 class DownloadManagementComponent:
@@ -233,10 +200,6 @@ class DownloadManagementComponent:
                 highlightthickness=0,
             )
             radiobutton.grid(row=index, column=0, padx=10, pady=10, sticky=tkinter.W)
-
-        # radiobutton.bind(
-        #     "<Button-1>", lambda event: self.event_emitter.emit(f"radio_button_{index}_clicked", event)
-        # )
 
     def set_chapters_entry(self) -> None:
         self.chapter_list_input = tkinter.StringVar()
@@ -275,9 +238,45 @@ class DownloadManagementComponent:
         )
         chapter_r2_entry.grid(row=2, column=4, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
 
+    def get_chapter_selection_strategy(self) -> ChapterStrategyConfig:
+        strategies = {0: "all", 1: "list", 2: "range"}
+        config = ChapterStrategyConfig()
+        config.strategy = strategies[self.radio_input.get()]
+        match config.strategy:
+            case "list":
+                chapters = self.get_chapters_list()
+                config.config = {"chapters": chapters}
+            case "range":
+                lower_bound, upper_bound = self.get_chapter_range_bounds()
+                config.config = {"lower_bound": lower_bound, "upper_bound": upper_bound}
+            case _:
+                pass
+        return config
+
+    def get_chapters_list(self) -> list[str]:
+        raw_chapters = self.chapter_list_input.get().strip().replace(" ", ",")
+        validate_non_empty(raw_chapters, "Chapter/s")
+        chapters_list = raw_chapters.split(",")
+        clean_chapters = [chapter for chapter in chapters_list if chapter]
+        return clean_chapters
+
+    def get_chapter_range_bounds(self) -> tuple[str, str]:
+        raw_lower = self.chapter_range_lower_bound_input.get().strip()
+        clean_lower = self.proccess_range_bound(raw_lower)
+        raw_upper = self.chapter_range_upper_bound_input.get().strip()
+        clean_upper = self.proccess_range_bound(raw_upper)
+        return clean_lower, clean_upper
+
+    @staticmethod
+    def proccess_range_bound(raw_bound: str) -> str:
+        raw_bound = raw_bound.strip()
+        validate_non_empty(raw_bound, "'Chapter range bound'")
+        validate_numeric(raw_bound, "'Chapter range bound'")
+        return raw_bound
+
 
 class MultithreadingComponent:
-    def __init__(self, container: Misc, config: DownloaderConfig) -> None:
+    def __init__(self, container: Misc, init_config: DownloaderConfig) -> None:
         self.label_frame = ttk.Labelframe(container, text="Multithreading", style="TLabelframe")
         self.label_frame.grid(row=1, column=0, padx=10, pady=10, columnspan=2, sticky=tkinter.EW)
 
@@ -288,5 +287,5 @@ class MultithreadingComponent:
         self.label.grid(row=0, column=0, padx=10, pady=10, sticky=tkinter.W)
 
         self.combo_box = ttk.Combobox(self.label_frame, values=list(range(1, 11)), width=3, font=("consolas", 8))
-        self.combo_box.set(config.threads)
+        self.combo_box.set(init_config.threads)
         self.combo_box.grid(row=0, column=1, ipady=2, padx=10, pady=10)
