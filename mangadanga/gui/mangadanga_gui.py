@@ -9,14 +9,14 @@ class MangadangaGUI:
     def __init__(
         self,
         container: Tk | None = None,
-        config: DownloaderConfig | None = None,
+        init_config: DownloaderConfig | None = None,
         widgets: MainWindow | None = None,
         styles: GUIStyle | None = None,
     ) -> None:
         self.container = container or Tk()
-        self.config = config or DownloaderConfig()
+        self.init_config = init_config or DownloaderConfig()
         self.set_main_window()
-        self.widgets = widgets or MainWindow(self.container, self.config)
+        self.widgets = widgets or MainWindow(self.container, self.init_config)
         self.styles = styles or GUIStyle(self.container)
 
     def set_main_window(self) -> None:
