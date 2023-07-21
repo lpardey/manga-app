@@ -19,12 +19,7 @@ from .config import DownloaderConfig
 
 from .downloader_factory import DOWNLOADERS, downloader_factory
 
-from .exceptions import (
-    DownloaderException,
-    DownloaderExceptionUrlWithoutCoverage,
-    DownloaderExceptionInvalidPattern,
-    DownloaderExceptionUnexpected,
-)
+from .exceptions import DownloaderException
 
 from .concurrency import gather_with_concurrency
 
@@ -50,9 +45,6 @@ __all__ = [
     "DOWNLOADERS",
     # .exceptions
     "DownloaderException",
-    "DownloaderExceptionUrlWithoutCoverage",
-    "DownloaderExceptionInvalidPattern",
-    "DownloaderExceptionUnexpected",
     # .concurrence
     "gather_with_concurrency",
 ]
