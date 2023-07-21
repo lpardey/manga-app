@@ -1,6 +1,7 @@
+from ..downloader.config import ChapterStrategyConfig
 from .models import ChapterIndex
 from abc import ABC, abstractmethod
-from .exceptions import DownloaderExceptionInvalidPattern
+from .exceptions import DownloaderException
 
 
 class ChapterSelectionStrategy(ABC):
@@ -33,18 +34,20 @@ class ChapterRangeSelection(ChapterSelectionStrategy):
         self.lower_bound = float(self.remove_non_numeric(lower_bound))
         self.upper_bound = float(self.remove_non_numeric(upper_bound))
         if self.lower_bound > self.upper_bound:
-            raise DownloaderExceptionInvalidPattern()
+            raise DownloaderException(
+                f"Invalid range pattern. '{self.lower_bound}' is greater than '{self.upper_bound}'"
+            )
 
     def chapter_in_selection(self, chapter: float) -> bool:
         return self.lower_bound <= float(self.remove_non_numeric(chapter)) <= self.upper_bound
 
 
-def chapters_selection_factory(
-    chapters: list[str] | None,
-    chapter_range: tuple[str, str] | None,
-) -> ChapterSelectionStrategy:
-    if chapters is None and chapter_range is None:
-        return AllChaptersSelection()
-    if chapters is not None:
-        return ChapterListSelection(chapters)
-    return ChapterRangeSelection(*chapter_range)
+STRATEGIES: dict[str, type[ChapterSelectionStrategy]] = {
+    "all": AllChaptersSelection,
+    "list": ChapterListSelection,
+    "range": ChapterRangeSelection,
+}
+
+
+def chapters_selection_factory(params: ChapterStrategyConfig) -> ChapterSelectionStrategy:
+    return STRATEGIES[params.strategy](**params.config)
