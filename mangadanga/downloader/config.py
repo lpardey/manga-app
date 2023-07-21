@@ -1,12 +1,14 @@
+from typing import Any
 from pydantic import BaseModel
-from .chapter_selection import AllChaptersSelection, ChapterSelectionStrategy
+
+
+class ChapterStrategyConfig(BaseModel):
+    strategy: str = "all"
+    config: dict[str, Any] = {}
 
 
 class DownloaderConfig(BaseModel):
-    url: str
-    chapters_selection: ChapterSelectionStrategy = AllChaptersSelection()
+    url: str = ""
     path: str = "."
+    chapter_strategy: ChapterStrategyConfig = ChapterStrategyConfig()
     threads: int = 1
-
-    class Config:
-        arbitrary_types_allowed = True
