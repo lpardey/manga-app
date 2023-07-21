@@ -6,8 +6,8 @@ from ..base import Downloader
 
 
 class Asurascans(Downloader):
-    URL = "https://www.asurascans.com/"
-    DOMAINS = {"www.asurascans.com"}
+    URL = "https://asura.gg/"
+    DOMAINS = {"www.asurascans.com", "asura.gg"}
     EXTRA_HEADERS = {"Referer": f"{URL}"}
 
     def get_title(self, data: BeautifulSoup) -> str:
