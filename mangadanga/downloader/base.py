@@ -4,6 +4,7 @@ import os
 from abc import ABC, abstractmethod
 from pathlib import PurePath
 from zipfile import ZipFile
+import time
 
 # Dependencies
 import aiohttp
@@ -15,6 +16,7 @@ from . import utils
 from .concurrency import gather_with_concurrency
 from .models import ChapterIndex
 from .config import DownloaderConfig
+from .chapter_selection import chapters_selection_factory
 
 logger = logging.getLogger(__name__)
 
@@ -26,17 +28,14 @@ class Downloader(ABC):
     def __init__(self, config: DownloaderConfig) -> None:
         super().__init__()
         self.config = config
+        self.chapter_selection_strategy = chapters_selection_factory(config.chapter_strategy)
 
     async def scrape_url(self, url: str) -> BeautifulSoup:
-        # crea un gestor de contextos para hacer la request
+        # Creates a context manager to execute the request
         async with aiohttp.ClientSession(headers=self.get_headers()) as session:
             async with session.get(url) as response:
-                # pide el texto de la respuesta. como text es una corrutina,
-                # hace falta ponerle un await delante para que te devuelva el
-                # valor del texto. si no, lo que te devuelve es la corrutina en si.
-                # no poner el await delante de una funcion asincrona es una de las
-                # fuentes mas comunes de errores al implementar codigo asincrono
-                html_doc = await response.text()
+                # The "ignore" parameter is used to ignore encoding errors
+                html_doc = await response.text("utf-8", "ignore")
                 web_data = BeautifulSoup(html_doc, "html.parser")
                 return web_data
 
@@ -46,14 +45,15 @@ class Downloader(ABC):
         if not os.path.isdir(path):
             os.makedirs(path)
 
-    def get_headers(self) -> dict[str, str]:
+    @classmethod
+    def get_headers(cls) -> dict[str, str]:
         basic_headers = {"User-Agent": "Mozilla/5.0", "Accept-Encoding": "gzip, deflate"}
-        basic_headers.update(self.EXTRA_HEADERS)
+        basic_headers.update(cls.EXTRA_HEADERS)
         return basic_headers
 
     def get_src_numbers_suffix(self, src: str) -> str:
         """
-        receives an image url and returns the numbers at the end of the filename
+        Receives an image url and returns the numbers at the end of the filename
         example: https://example.com/image_001.jpg -> 001
         """
         src_stem = PurePath(src).stem
@@ -71,7 +71,7 @@ class Downloader(ABC):
         filtered_chapters = {
             chapter: url
             for chapter, url in all_chapters.items()
-            if self.config.chapters_selection.chapter_in_selection(chapter)
+            if self.chapter_selection_strategy.chapter_in_selection(chapter)
         }
         return filtered_chapters
 
@@ -99,9 +99,7 @@ class Downloader(ABC):
     async def download_chapter(self, data: BeautifulSoup, zipf: ZipFile) -> None:
         """Gets chapter data, creates a zip file by its name, and downloads and stores its images to the zip file"""
         images_urls = await self.get_images_src(data)
-        # This could be done in parallel
         images = await self.get_all_chapter_images(images_urls)
-        # this is a blocking operation
         for image_filename, image_data in images:
             zipf.writestr(image_filename, image_data)
 
@@ -113,18 +111,32 @@ class Downloader(ABC):
         with ZipFile(chapter_full_path, "w") as zipf:
             await self.download_chapter(chapter_data, zipf)
 
+    # TODO: Independent decorators for logger and for time.time()
     async def download(self) -> None:
         """Creates a directory and downloads chapters, in other words: MangaDanga!"""
+        logger.info(f"Scrapping information for: {self.config.url}")
         web_data = await self.scrape_url(self.config.url)
         title = self.get_title(web_data)
+        logger.info(f"Title: {title}")
         sanitized_title = utils.format_name(title)
         self.create_directory(sanitized_title)
+        scrap_chapters_info_start = time.time()
         all_chapters = self.get_all_chapters_to_url(web_data)
+        scrap_chapters_info_end = time.time()
+        ellapsed_time = scrap_chapters_info_end - scrap_chapters_info_start
+        logger.info(f"Scrapped chapters info in: {ellapsed_time:.2f} seconds")
+        logger.info(f"Starting download for: {title}")
+        download_chapters_start = time.time()
         chapter_number_to_url = self.get_chapter_number_to_url(all_chapters)
         chapters_tasks = [
             self.process_chapter(index, url, sanitized_title) for index, url in chapter_number_to_url.items()
         ]
         await gather_with_concurrency(self.config.threads, *chapters_tasks)
+        download_chapters_end = time.time()
+        ellapsed_time = download_chapters_end - download_chapters_start
+        logger.info(f"Finished downloading: {title} in {ellapsed_time:.2f} seconds")
+        average_time_per_chapter = ellapsed_time / len(chapter_number_to_url)
+        logger.info(f"Average time per chapter: {average_time_per_chapter:.2f} seconds")
 
     @abstractmethod
     def get_title(self, data: BeautifulSoup) -> str:
