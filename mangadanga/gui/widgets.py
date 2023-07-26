@@ -7,11 +7,8 @@ import logging
 from ..downloader.config import ChapterStrategyConfig
 from ..downloader.exceptions import DownloaderException
 from .utils import validate_non_empty, validate_numeric
-from concurrent import futures
 
 logger = logging.getLogger("MangaDanga-GUI")
-
-thread_pool_executor = futures.ThreadPoolExecutor(max_workers=1)
 
 
 class MainWindow:
@@ -23,17 +20,11 @@ class MainWindow:
         self.window_general_management(container)
 
     def get_config(self) -> DownloaderConfig:
-        url = self.main_tabs.download_tab.url_component.url_value.get()
-        validate_non_empty(url, "'URL'")
-        path = self.main_tabs.download_tab.local_path_component.path_value.get()
-        validate_non_empty(path, "'Save to'")
-        raw_threads = self.main_tabs.settings_tab.multithreading.combo_box.get()
-        validate_non_empty(raw_threads, "'Threads'")
-        validate_numeric(raw_threads, "'Threads'")
-        threads = int(raw_threads)
+        url = self.main_tabs.download_tab.url_component.get_url()
+        path = self.main_tabs.download_tab.local_path_component.get_path()
         chapter_strategy_config = self.main_tabs.settings_tab.download_management.get_chapter_selection_strategy()
-        config = DownloaderConfig(url=url, path=path, chapter_strategy=chapter_strategy_config, threads=threads)
-        return config
+        threads = self.main_tabs.settings_tab.multithreading.get_threads()
+        return DownloaderConfig(url=url, path=path, chapter_strategy=chapter_strategy_config, threads=threads)
 
     def window_general_management(self, container: Misc) -> None:
         container.bind("<Escape>", lambda e: self.quit(container))
@@ -123,6 +114,11 @@ class UrlComponent:
         self.text.grid(row=0, column=0, columnspan=2, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
         self.text.focus()
 
+    def get_url(self) -> str:
+        url = self.url_value.get()
+        validate_non_empty(url, "URL")
+        return url
+
 
 class LocalPathComponent:
     def __init__(self, container: Misc, init_config: DownloaderConfig) -> None:
@@ -144,10 +140,15 @@ class LocalPathComponent:
         self.button.grid(row=1, column=1, ipady=1, padx=10, pady=10)
         self.button.bind("<Return>", lambda e: self.handle_browse_button())
 
+    def get_path(self) -> str:
+        path = self.path_value.get()
+        validate_non_empty(path, "Save to")
+        return path
+
     def handle_browse_button(self) -> None:
         try:
             save_to_path = filedialog.askdirectory(initialdir=self.init_config.path)
-            validate_non_empty(field=save_to_path, name="'Save to'")
+            validate_non_empty(field=save_to_path, name="Save to")
         except DownloaderException as e:
             logger.exception(e)
             messagebox.showwarning(title="Warning!", message=e)
@@ -270,8 +271,8 @@ class DownloadManagementComponent:
     @staticmethod
     def proccess_range_bound(raw_bound: str) -> str:
         raw_bound = raw_bound.strip()
-        validate_non_empty(raw_bound, "'Chapter range bound'")
-        validate_numeric(raw_bound, "'Chapter range bound'")
+        validate_non_empty(raw_bound, "Chapter range bound")
+        validate_numeric(raw_bound, "Chapter range bound")
         return raw_bound
 
 
@@ -289,3 +290,9 @@ class MultithreadingComponent:
         self.combo_box = ttk.Combobox(self.label_frame, values=list(range(1, 11)), width=3, font=("consolas", 8))
         self.combo_box.set(init_config.threads)
         self.combo_box.grid(row=0, column=1, ipady=2, padx=10, pady=10)
+
+    def get_threads(self) -> int:
+        raw_threads = self.combo_box.get()
+        validate_non_empty(raw_threads, "Threads")
+        validate_numeric(raw_threads, "Threads")
+        return int(raw_threads)
