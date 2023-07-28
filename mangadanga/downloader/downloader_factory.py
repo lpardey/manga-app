@@ -37,7 +37,7 @@ def downloader_factory(config: DownloaderConfig, downloaders: set[Type[Downloade
                 "Valid domain names:",
             ]
             + [" - " + valid_url for valid_url in valid_urls]
-            + ["", "Our door is always open for a good cup of coffee.", "buymeacoffee@needmoney.co"]
+            + ["", "Our door is always open for a good cup of coffee!", "buymeacoffee@needmoney.co"]
         )
         message = "\n".join(message_lines)
         raise DownloaderException(message)
