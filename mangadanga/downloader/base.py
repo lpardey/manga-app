@@ -120,9 +120,9 @@ class Downloader(ABC):
     # TODO: Independent decorators for logger and for time.time()
     async def download(self) -> None:
         """Creates a directory and downloads chapters, in other words: MangaDanga!"""
+        status = "success"
+        message = ""
         try:
-            status = "success"
-            message = ""
             logger.info(f"Scrapping information for: {self.config.url}")
             web_data = await self.scrape_url(self.config.url)
             title = self.get_title(web_data)
