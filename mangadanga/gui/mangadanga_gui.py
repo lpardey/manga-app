@@ -1,4 +1,5 @@
-from tkinter import Tk
+import tkinter
+import tkinter.ttk
 
 from ..downloader.config import DownloaderConfig
 from .style import GUIStyle
@@ -8,12 +9,12 @@ from .widgets import MainWindow
 class MangadangaGUI:
     def __init__(
         self,
-        container: Tk | None = None,
+        container: tkinter.Tk | None = None,
         init_config: DownloaderConfig | None = None,
         widgets: MainWindow | None = None,
         styles: GUIStyle | None = None,
     ) -> None:
-        self.container = container or Tk()
+        self.container = container or tkinter.Tk()
         self.init_config = init_config or DownloaderConfig()
         self.set_main_window()
         self.widgets = widgets or MainWindow(self.container, self.init_config)
