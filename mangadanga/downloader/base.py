@@ -129,12 +129,15 @@ class Downloader(ABC):
             logger.info(f"Title: {title}")
             sanitized_title = utils.format_name(title)
             self.create_directory(sanitized_title)
+            # timed_get_all_chapters_to_url
             scrap_chapters_info_start = time.time()
             all_chapters = self.get_all_chapters_to_url(web_data)
             scrap_chapters_info_end = time.time()
             ellapsed_time = scrap_chapters_info_end - scrap_chapters_info_start
             logger.info(f"Scrapped chapters info in: {ellapsed_time:.2f} seconds")
+            #
             logger.info(f"Starting download for: {title}")
+            # Otra funcion
             download_chapters_start = time.time()
             chapter_number_to_url = self.get_chapter_number_to_url(all_chapters)
             chapters_tasks = [
@@ -145,8 +148,10 @@ class Downloader(ABC):
             download_chapters_end = time.time()
             ellapsed_time = download_chapters_end - download_chapters_start
             logger.info(f"Finished downloading: {title} in {ellapsed_time:.2f} seconds")
-            average_time_per_chapter = ellapsed_time / len(chapter_number_to_url)
-            logger.info(f"Average time per chapter: {average_time_per_chapter:.2f} seconds")
+            #
+            # y nos olvidamos del tiempo medio por capítulo
+            # average_time_per_chapter = ellapsed_time / len(chapter_number_to_url)
+            # logger.info(f"Average time per chapter: {average_time_per_chapter:.2f} seconds")
         except DownloaderException as e:
             status = "error"
             message = str(e)
