@@ -9,7 +9,7 @@ class EventManager:
     def __init__(self):
         self.running = False
         self.events_queue: Queue[tuple[str, tuple, dict[str, Any]]] = Queue()
-        self.listeners: dict[str, list[Callable[..., None]]] = {}
+        self.listeners: dict[str, list[Callable[..., None]]] = dict()
 
     def subscribe(self, event: str, listener: Callable[..., None]):
         if event not in self.listeners:
