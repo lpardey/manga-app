@@ -5,7 +5,16 @@ from tkinter import Misc, ttk, filedialog, messagebox
 from mangadanga.downloader import downloader_factory, DownloaderConfig
 from typing import Callable, Literal
 import logging
-from mangadanga.events import EventManager, EVENT_MANAGER, OnCloseProgress
+from mangadanga.events import (
+    EventManager,
+    EVENT_MANAGER,
+    OnChapterDownloadFinished,
+    OnCloseProgress,
+    OnDownloadFinished,
+    OnDownloadFinishedGUI,
+    OnMangaInfoUpdate,
+    OnStartDownload,
+)
 from ..downloader.config import ChapterStrategyConfig
 from ..downloader.exceptions import DownloaderException
 from .utils import validate_non_empty, validate_numeric
@@ -52,18 +61,23 @@ class ProgressWindow:
         self.container = container or tkinter.Toplevel()
         self.container.title("Progress")
         self.container.resizable(False, False)
-        self.progress_bar = ttk.Progressbar(self.container, orient="horizontal", length=300, mode="determinate")
-        self.progress_bar.pack()
-        self.progress_label = ttk.Label(self.container, text="Receiving manga info...")
-        self.progress_label.pack()
-        self.event_manager = event_manager
-        self.event_manager.subscribe("chapter_download_finished", self.on_chapter_download_finished)
-        self.event_manager.subscribe("manga_info_updated", self.on_manga_info_updated)
-        # OnCloseProgress(self.event_manager).subscribe(self.on_close_progress)
-        self.event_manager.subscribe("close_progress", self.on_close_progress)
 
-    def setup_widgets(self) -> None:
-        pass
+        progress_bar, progress_label = self.setup_widgets()
+        self.progress_bar = progress_bar
+        self.progress_label = progress_label
+
+        self.event_manager = event_manager
+        OnChapterDownloadFinished(self.event_manager).subscribe(self.on_chapter_download_finished)
+        OnMangaInfoUpdate(self.event_manager).subscribe(self.on_manga_info_updated)
+        OnCloseProgress(self.event_manager).subscribe(self.on_close_progress)
+
+    def setup_widgets(self) -> tuple[ttk.Progressbar, ttk.Label]:
+        progress_bar = ttk.Progressbar(self.container, orient="horizontal", length=300, mode="determinate")
+        progress_bar.pack()
+
+        progress_label = ttk.Label(self.container, text="Receiving manga info...")
+        progress_label.pack()
+        return progress_bar, progress_label
 
     def update_label(self) -> None:
         self.progress_label[
@@ -81,9 +95,9 @@ class ProgressWindow:
         self.update_label()
 
     def on_close_progress(self) -> None:
-        self.event_manager.unsubscribe("chapter_download_finished", self.on_chapter_download_finished)
-        self.event_manager.unsubscribe("manga_info_updated", self.on_manga_info_updated)
-        self.event_manager.unsubscribe("close_progress", self.on_close_progress)
+        OnChapterDownloadFinished(self.event_manager).unsubscribe(self.on_chapter_download_finished)
+        OnMangaInfoUpdate(self.event_manager).unsubscribe(self.on_manga_info_updated)
+        OnCloseProgress(self.event_manager).unsubscribe(self.on_close_progress)
         self.container.destroy()
 
 
@@ -114,33 +128,51 @@ class DownloadButton:
         event_manager: EventManager = EVENT_MANAGER,
     ) -> None:
         self.container = container
+        self.event_manager = event_manager
         self.button = ttk.Button(
             container,
             text="Download",
-            command=self.handle_download_button,
+            command=OnStartDownload(self.event_manager).emit,
             width=15,
             style="TButton",
         )
         self.button.grid(row=2, column=0, ipady=1, padx=10, pady=10)
         self.get_config = get_config
-        self.button.bind("<Return>", lambda _: self.handle_download_button())
-        self.event_manager = event_manager
-        self.event_manager.subscribe("download_finished", self.on_download_finished)
-        self.event_manager.subscribe("init_download", self.on_init_download)
-        self.event_manager.subscribe("download_finished_gui", self.on_download_finished_gui)
-        self.event_manager.subscribe("start_download", self.on_start_download)
+        self.button.bind("<Return>", lambda _: OnStartDownload(self.event_manager).emit())
+        OnStartDownload(self.event_manager).subscribe(self.on_start_download)
+        OnDownloadFinished(self.event_manager).subscribe(self.on_download_finished)
+        OnDownloadFinishedGUI(self.event_manager).subscribe(self.on_download_finished_gui)
 
-    def on_init_download(self) -> None:
+    def on_start_download(self) -> None:
+        status = "success"
+        try:
+            self.process_download()
+        except DownloaderException as e:
+            status = "warning"
+            message = str(e)
+            logger.exception(e)
+        except Exception as e:
+            message = str(e)
+            logger.exception(e)
+        finally:
+            OnDownloadFinished(self.event_manager).emit(status, message)
+
+    def process_download(self) -> None:
+        config = self.get_config()
+        downloader = downloader_factory(config)
         self.button["state"] = "disabled"
         ProgressWindow()
+        self.threaded_coro(downloader.download())
 
-    def on_download_finished(self, status: Literal["success", "error"], message: str) -> None:
-        self.event_manager.emit("close_progress")
-        self.event_manager.emit("download_finished_gui", status, message)
+    def on_download_finished(self, status: Literal["success", "warning"], message: str) -> None:
+        OnCloseProgress(self.event_manager).emit()
+        OnDownloadFinishedGUI(self.event_manager).emit(status, message)
 
-    def on_download_finished_gui(self, status: Literal["success", "error"], message) -> None:
+    def on_download_finished_gui(self, status: Literal["success", "warning"], message: str) -> None:
         if status == "success":
             messagebox.showinfo(title="MangaDanga", message="Mandanga completed!")
+        elif status == "warning":
+            messagebox.showwarning(title="Warning!", message=message)
         else:
             messagebox.showerror(title="Error!", message=f"Something unexpected happened: {message}")
         self.button["state"] = "normal"
@@ -148,22 +180,6 @@ class DownloadButton:
     def threaded_coro(self, coro) -> None:
         thread = threading.Thread(target=asyncio.run, args=(coro,))
         thread.start()
-
-    def handle_download_button(self) -> None:
-        try:
-            config = self.get_config()
-            self.event_manager.emit("init_download")
-            self.event_manager.emit("start_download", config)
-        except DownloaderException as e:
-            logger.exception(e)
-            messagebox.showwarning(title="Warning!", message=e)
-        except Exception as e:
-            logger.exception(e)
-            messagebox.showerror(title="Error!", message=f"Something unexpected happened: {e}")
-
-    def on_start_download(self, config: DownloaderConfig) -> None:
-        downloader = downloader_factory(config)
-        self.threaded_coro(downloader.download())
 
 
 class DownloadTab:
@@ -400,6 +416,6 @@ class MultithreadingComponent:
 
     def get_threads(self) -> int:
         raw_threads = self.combo_box.get()
-        validate_non_empty(raw_threads, "Threads")
-        validate_numeric(raw_threads, "Threads")
+        validate_non_empty(raw_threads, "Number of threads")
+        validate_numeric(raw_threads, "Number of threads")
         return int(raw_threads)
