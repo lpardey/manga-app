@@ -64,22 +64,35 @@ class Event:
     def subscribe(self, listener: Callable[..., None]):
         self.manager.subscribe(self.NAME, listener)
 
+    def unsubscribe(self, listener: Callable[..., None]):
+        self.manager.unsubscribe(self.NAME, listener)
 
+# manager.emit("close_progress")
+# Progress window events
 class OnCloseProgress(Event):
     NAME = "close_progress"
 
-    def emit(self):
-        self.manager.emit(self.NAME)
 
-    def subscribe(self, listener: Callable[[], None]):
-        self.manager.subscribe(self.NAME, listener)
+class OnMangaInfoUpdate(Event):
+    NAME = "manga_info_updated"
 
 
-class EventCaca(Event):
-    NAME = "caca"
+class OnChapterDownloadFinished(Event):
+    NAME = "chapter_download_finished"
 
-    def emit(self, color: str, cantidad: float, consistencia: str):
-        self.manager.emit(self.NAME, color, cantidad, consistencia)
 
-    def subscribe(self, listener: Callable[[str, float, str], None]):
-        self.manager.subscribe(self.NAME, listener)
+# Download button events
+class OnDownloadFinished(Event):
+    NAME = "download_finished"
+
+
+class OnInitDownload(Event):
+    NAME = "init_download"
+
+
+class OnDownloadFinishedGUI(Event):
+    NAME = "download_finished_gui"
+
+
+class OnStartDownload(Event):
+    NAME = "start_download"
