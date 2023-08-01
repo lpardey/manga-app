@@ -10,10 +10,15 @@ import time
 import aiohttp
 import asyncio
 from bs4 import BeautifulSoup
-from mangadanga.downloader.exceptions import DownloaderException
 
 
-from mangadanga.events import EVENT_MANAGER, EventManager
+from mangadanga.gui.events import (
+    EVENT_MANAGER,
+    EventManager,
+    OnChapterDownloadFinished,
+    OnDownloadFinished,
+    OnMangaInfoUpdate,
+)
 
 # Local imports
 from . import utils
@@ -115,7 +120,7 @@ class Downloader(ABC):
         logger.info(f"Downloading chapter: {chapter_filename}")
         with ZipFile(chapter_full_path, "w") as zipf:
             await self.download_chapter(chapter_data, zipf)
-        self.event_manager.emit("chapter_download_finished")
+        OnChapterDownloadFinished(self.event_manager).emit()
 
     # TODO: Independent decorators for logger and for time.time()
     async def download(self) -> None:
@@ -143,7 +148,7 @@ class Downloader(ABC):
             chapters_tasks = [
                 self.process_chapter(index, url, sanitized_title) for index, url in chapter_number_to_url.items()
             ]
-            self.event_manager.emit("manga_info_updated", len(chapters_tasks))
+            OnMangaInfoUpdate(self.event_manager).emit(len(chapters_tasks))
             await gather_with_concurrency(self.config.threads, *chapters_tasks)
             download_chapters_end = time.time()
             ellapsed_time = download_chapters_end - download_chapters_start
@@ -152,16 +157,12 @@ class Downloader(ABC):
             # y nos olvidamos del tiempo medio por capítulo
             # average_time_per_chapter = ellapsed_time / len(chapter_number_to_url)
             # logger.info(f"Average time per chapter: {average_time_per_chapter:.2f} seconds")
-        except DownloaderException as e:
-            status = "error"
-            message = str(e)
-            logger.exception(e)
         except Exception as e:
             status = "error"
             message = str(e)
             logger.exception(e)
         finally:
-            self.event_manager.emit("download_finished", status, message)
+            OnDownloadFinished(self.event_manager).emit(status, message)
 
     @abstractmethod
     def get_title(self, data: BeautifulSoup) -> str:
