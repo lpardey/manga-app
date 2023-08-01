@@ -5,7 +5,7 @@ from tkinter import Misc, ttk, filedialog, messagebox
 from mangadanga.downloader import downloader_factory, DownloaderConfig
 from typing import Callable, Literal
 import logging
-from mangadanga.events import (
+from .events import (
     EventManager,
     EVENT_MANAGER,
     OnChapterDownloadFinished,
