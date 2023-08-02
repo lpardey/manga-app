@@ -144,7 +144,6 @@ class DownloadButton:
         OnDownloadFinishedGUI(self.event_manager).subscribe(self.on_download_finished_gui)
 
     def on_start_download(self) -> None:
-        status = "success"
         try:
             self.process_download()
         except DownloaderException as e:
@@ -152,10 +151,14 @@ class DownloadButton:
             message = str(e)
             logger.exception(e)
         except Exception as e:
+            status = "error"
             message = str(e)
             logger.exception(e)
+        else:
+            status = "ok"
+            message = ""
         finally:
-            OnDownloadFinished(self.event_manager).emit(status, message)
+            OnDownloadFinishedGUI(self.event_manager).emit(status, message)
 
     def process_download(self) -> None:
         config = self.get_config()
@@ -164,17 +167,19 @@ class DownloadButton:
         ProgressWindow()
         self.threaded_coro(downloader.download())
 
-    def on_download_finished(self, status: Literal["success", "warning"], message: str) -> None:
+    def on_download_finished(self, status: Literal["success", "warning", "error"], message: str) -> None:
         OnCloseProgress(self.event_manager).emit()
         OnDownloadFinishedGUI(self.event_manager).emit(status, message)
 
-    def on_download_finished_gui(self, status: Literal["success", "warning"], message: str) -> None:
+    def on_download_finished_gui(self, status: Literal["success", "warning", "error"], message: str) -> None:
         if status == "success":
             messagebox.showinfo(title="MangaDanga", message="Mandanga completed!")
         elif status == "warning":
             messagebox.showwarning(title="Warning!", message=message)
-        else:
+        elif status == "error":
             messagebox.showerror(title="Error!", message=f"Something unexpected happened: {message}")
+        else:
+            pass
         self.button["state"] = "normal"
 
     def threaded_coro(self, coro) -> None:
