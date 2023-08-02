@@ -17,7 +17,9 @@ class Asurascans(Downloader):
         chapter_content = data.find(class_="eplister").find_all("a")
         chapter_content.reverse()
         separators = ["chapter", "-"]
-        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
+        chapter_number_to_url = {
+            ChapterIndex(self.get_chapter_index(data, separators)): data["href"] for data in chapter_content
+        }
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
