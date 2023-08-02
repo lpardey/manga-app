@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from pathlib import PurePath
 from .. import utils
 from ..models import ChapterIndex
 from ..base import Downloader
@@ -17,11 +16,8 @@ class Asurascans(Downloader):
     def get_all_chapters_to_url(self, data: BeautifulSoup) -> dict[ChapterIndex, str]:
         chapter_content = data.find(class_="eplister").find_all("a")
         chapter_content.reverse()
-        old_str = f"2226495089-{self.get_title(data).replace(' ', '-').lower()}-chapter-"
-        # Better to do an enumerate
-        chapter_number_to_url = {
-            ChapterIndex(PurePath(data["href"]).name.replace(old_str, "")): data["href"] for data in chapter_content
-        }
+        separators = ["chapter", "-"]
+        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
