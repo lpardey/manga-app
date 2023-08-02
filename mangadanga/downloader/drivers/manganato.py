@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-from pathlib import PurePath
 
 from .. import utils
 
@@ -20,9 +19,8 @@ class Manganato(Downloader):
     def get_all_chapters_to_url(self, data: BeautifulSoup) -> dict[ChapterIndex, str]:
         chapter_content = data.find(class_="panel-story-chapter-list").find_all("a")
         chapter_content.reverse()
-        chapter_number_to_url = {
-            ChapterIndex(PurePath(data["href"]).name.replace("chapter-", "")): data["href"] for data in chapter_content
-        }
+        separators = ["chapter", "-"]
+        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
