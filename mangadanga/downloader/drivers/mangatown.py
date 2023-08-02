@@ -19,7 +19,8 @@ class Mangatown(Downloader):
         chapter_content.reverse()
         separators = ["c"]
         chapter_number_to_url = {
-            self.get_chapter_index(data, separators): f"{self.URL}" + data["href"] for data in chapter_content
+            ChapterIndex(self.get_chapter_index(data, separators)): f"{self.URL}" + data["href"]
+            for data in chapter_content
         }
         return chapter_number_to_url
 
