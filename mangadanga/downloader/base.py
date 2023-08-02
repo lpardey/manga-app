@@ -9,7 +9,7 @@ import time
 # Dependencies
 import aiohttp
 import asyncio
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, ResultSet
 
 
 from mangadanga.gui.events import (
@@ -61,21 +61,18 @@ class Downloader(ABC):
         basic_headers.update(cls.EXTRA_HEADERS)
         return basic_headers
 
-    def get_src_numbers_suffix(self, src: str) -> str:
-        """
-        Receives an image url and returns the numbers at the end of the filename
-        example: https://example.com/image_001.jpg -> 001
-        """
-        src_stem = PurePath(src).stem
-        suffix = []
-        for character in reversed(src_stem):
-            if character.isnumeric():
-                suffix.append(character)
-            else:
-                break
-        suffix.reverse()
-        src_numbers_suffix = "".join(suffix)
-        return src_numbers_suffix
+    @staticmethod
+    def get_chapter_index(data: ResultSet, separators: list[str]) -> ChapterIndex:
+        final_path = PurePath(data["href"]).name
+        if not separators:
+            return ChapterIndex(final_path)
+        final_path_substrings = final_path.split(separators[0])
+        if len(separators) == 2:
+            chapter_index_substrings = final_path_substrings[1].split(separators[1])
+            chapter_index = ChapterIndex(chapter_index_substrings[1])
+        else:
+            chapter_index = ChapterIndex(final_path_substrings[1])
+        return chapter_index
 
     def get_chapter_number_to_url(self, all_chapters: dict[ChapterIndex, str]) -> dict[ChapterIndex, str]:
         filtered_chapters = {
