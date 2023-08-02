@@ -22,7 +22,9 @@ class Mangadoom(Downloader):
         chapter_content = data.find(class_="chapter-list").find_all("a")
         chapter_content.reverse()
         separators = []
-        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
+        chapter_number_to_url = {
+            ChapterIndex(self.get_chapter_index(data, separators)): data["href"] for data in chapter_content
+        }
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
@@ -32,10 +34,6 @@ class Mangadoom(Downloader):
         return chapter_file
 
     async def get_images_src(self, data: BeautifulSoup) -> list[str]:
-        images_src = await self.get_images_src_exhaustive_search(data)
-        return images_src
-
-    async def get_images_src_exhaustive_search(self, data: BeautifulSoup) -> list[str]:
         data_options = data.find(class_="selectPage pull-right chapter-page1").find_all("option")
         chapter_data = [await self.scrape_url(url["value"]) for url in data_options]
         images_src = [data.find(class_="img-responsive")["src"] for data in chapter_data]
