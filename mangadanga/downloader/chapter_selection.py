@@ -25,10 +25,6 @@ class ChapterListSelection(ChapterSelectionStrategy):
 
 
 class ChapterRangeSelection(ChapterSelectionStrategy):
-    @staticmethod
-    def remove_non_numeric(string: str) -> str:
-        return "".join(char for char in string if char.isnumeric() or char == ".")
-
     def __init__(self, lower_bound: ChapterIndex, upper_bound: ChapterIndex) -> None:
         super().__init__()
         self.lower_bound = float(self.remove_non_numeric(lower_bound))
@@ -40,6 +36,10 @@ class ChapterRangeSelection(ChapterSelectionStrategy):
 
     def chapter_in_selection(self, chapter: float) -> bool:
         return self.lower_bound <= float(self.remove_non_numeric(chapter)) <= self.upper_bound
+
+    @staticmethod
+    def remove_non_numeric(string: str) -> str:
+        return "".join(char for char in string if char.isnumeric() or char == ".")
 
 
 STRATEGIES: dict[str, type[ChapterSelectionStrategy]] = {
