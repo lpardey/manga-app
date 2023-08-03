@@ -7,18 +7,12 @@ from .widgets import MainWindow
 
 
 class MangadangaGUI:
-    def __init__(
-        self,
-        container: tkinter.Tk | None = None,
-        init_config: DownloaderConfig | None = None,
-        widgets: MainWindow | None = None,
-        styles: GUIStyle | None = None,
-    ) -> None:
-        self.container = container or tkinter.Tk()
-        self.init_config = init_config or DownloaderConfig()
+    def __init__(self) -> None:
+        self.container = tkinter.Tk()
+        self.init_config = DownloaderConfig()
         self.set_main_window()
-        self.widgets = widgets or MainWindow(self.container, self.init_config)
-        self.styles = styles or GUIStyle(self.container)
+        self.widgets = MainWindow(self.container, self.init_config)
+        self.styles = GUIStyle(self.container)
 
     def set_main_window(self) -> None:
         self.main_window_column_row_config()
