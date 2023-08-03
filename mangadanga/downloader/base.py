@@ -116,7 +116,7 @@ class Downloader(ABC):
         }
         return filtered_chapters
 
-    async def process_chapter(self, index: int, chapter_url: str, manga_title: str) -> None:
+    async def process_chapter(self, index: ChapterIndex, chapter_url: str, manga_title: str) -> None:
         chapter_data = await self.scrape_url(chapter_url)
         chapter_filename = self.get_chapter_filename(index, chapter_data)
         chapter_full_path = os.path.join(self.config.path, manga_title, chapter_filename)
@@ -176,7 +176,7 @@ class Downloader(ABC):
         pass
 
     @abstractmethod
-    def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
+    def get_chapter_filename(self, index: ChapterIndex, data: BeautifulSoup) -> str:
         """Scrapes chapter name. Returns its path with '.zip' extension"""
         pass
 

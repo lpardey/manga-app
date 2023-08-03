@@ -37,7 +37,7 @@ class ChapterRangeSelection(ChapterSelectionStrategy):
                 f"Invalid range pattern. '{self.lower_bound}' is greater than '{self.upper_bound}'"
             )
 
-    def chapter_in_selection(self, chapter: float) -> bool:
+    def chapter_in_selection(self, chapter: ChapterIndex) -> bool:
         return self.lower_bound <= float(self.remove_non_numeric(chapter)) <= self.upper_bound
 
     @staticmethod

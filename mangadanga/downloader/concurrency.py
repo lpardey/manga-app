@@ -2,7 +2,7 @@
 import asyncio
 
 
-async def gather_with_concurrency(n, *coros):
+async def gather_with_concurrency(n: int, *coros):
     semaphore = asyncio.Semaphore(n)
 
     async def sem_coro(coro):

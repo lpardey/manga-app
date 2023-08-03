@@ -24,7 +24,7 @@ class Mangadoom(Downloader):
         chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
         return chapter_number_to_url
 
-    def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
+    def get_chapter_filename(self, index: ChapterIndex, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="col-md-8 col-xs-12").text.strip()
         formatted_chapter_title = utils.format_name(chapter_title)
         chapter_file = f"{index}_{formatted_chapter_title}.zip"

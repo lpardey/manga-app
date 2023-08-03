@@ -24,7 +24,7 @@ class Manganato(Downloader):
         chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
         return chapter_number_to_url
 
-    def get_chapter_filename(self, index: int, data: BeautifulSoup) -> str:
+    def get_chapter_filename(self, index: ChapterIndex, data: BeautifulSoup) -> str:
         chapter_title = data.find(class_="panel-chapter-info-top").find("h1").string
         formatted_chapter_title = utils.format_name(chapter_title)
         chapter_filename = f"{index}_{formatted_chapter_title}.zip"

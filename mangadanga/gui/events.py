@@ -52,13 +52,13 @@ EVENT_MANAGER = EventManager()
 
 
 class Event:
-    NAME = None
+    NAME = ""
 
     def __init__(self, manager: EventManager = EVENT_MANAGER) -> None:
         self.manager = manager
 
     def emit(self, *args, **kwargs) -> None:
-        if self.NAME is None:
+        if not self.NAME:
             raise NotImplementedError("An event needs a name...")
         self.manager.emit(self.NAME, *args, **kwargs)
 

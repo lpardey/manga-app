@@ -6,7 +6,7 @@ import logging
 import threading
 import tkinter
 from tkinter import Misc, filedialog, messagebox, ttk
-from typing import Callable, Literal
+from typing import Any, Callable, Coroutine, Literal
 
 # From apps
 from mangadanga.downloader import DownloaderConfig, downloader_factory
@@ -146,7 +146,7 @@ class DownloadButton:
             pass
         self.button["state"] = "normal"
 
-    def threaded_coro(self, coro) -> None:
+    def threaded_coro(self, coro: Coroutine[Any, Any, None]) -> None:
         thread = threading.Thread(target=asyncio.run, args=(coro,))
         thread.start()
 
@@ -352,7 +352,10 @@ class DownloadManagementComponent:
         raw_chapters = self.chapter_list_input.get().strip().replace(" ", ",")
         validate_non_empty(raw_chapters, "Chapter/s")
         chapters_list = raw_chapters.split(",")
-        clean_chapters = [chapter for chapter in chapters_list if validate_numeric(chapter, "Chapter/s")]
+        clean_chapters = []
+        for chapter in chapters_list:
+            validate_numeric(chapter, "Chapter/s")
+            clean_chapters.append(chapter)
         return clean_chapters
 
     def get_chapter_range_bounds(self) -> tuple[str, str]:
