@@ -154,7 +154,7 @@ class Downloader(ABC):
         return image_name
 
     @staticmethod
-    def get_chapter_index(data: ResultSet, sep: list[str]) -> str:
+    def get_chapter_index(data: ResultSet, sep: list[str]) -> ChapterIndex:
         final_path = PurePath(data["href"]).name
         if not sep:
             chapter_index = final_path
@@ -163,7 +163,7 @@ class Downloader(ABC):
         else:
             chapter_index = final_path.split(sep[0])[1]
 
-        return chapter_index
+        return ChapterIndex(chapter_index)
 
     @abstractmethod
     def get_title(self, data: BeautifulSoup) -> str:
