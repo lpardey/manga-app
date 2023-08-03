@@ -13,18 +13,8 @@ DOWNLOADERS: set[Type[Downloader]] = {
 }
 
 
-def get_domain(url: str) -> str:
-    domain = urllib.parse.urlparse(url).netloc
-    return domain
-
-
 def downloader_factory(config: DownloaderConfig, downloaders: set[Type[Downloader]] = DOWNLOADERS) -> Downloader:
     domain = get_domain(config.url)
-
-    # for downloader_cls in downloaders:
-    #     if domain in downloader_cls.DOMAINS:
-    #         return downloader_cls(config)
-
     try:
         downloader_cls = next(downloader for downloader in downloaders if domain in downloader.DOMAINS)
         return downloader_cls(config)
@@ -41,3 +31,8 @@ def downloader_factory(config: DownloaderConfig, downloaders: set[Type[Downloade
         )
         message = "\n".join(message_lines)
         raise DownloaderException(message)
+
+
+def get_domain(url: str) -> str:
+    domain = urllib.parse.urlparse(url).netloc
+    return domain
