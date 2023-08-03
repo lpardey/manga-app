@@ -1,14 +1,11 @@
+# Standard Library
+import asyncio
 import logging
 import sys
-import asyncio
 
-from .downloader import (
-    DownloaderConfig,
-    chapters_selection_factory,
-    downloader_factory,
-)
+# Local imports
+from .downloader import DownloaderConfig, chapters_selection_factory, downloader_factory
 from .parser import get_parser
-
 
 logger = logging.getLogger("MangaDanga")
 

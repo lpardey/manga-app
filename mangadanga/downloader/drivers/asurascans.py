@@ -1,7 +1,10 @@
+# Dependencies
 from bs4 import BeautifulSoup
+
+# Local imports
 from .. import utils
-from ..models import ChapterIndex
 from ..base import Downloader
+from ..models import ChapterIndex
 
 
 class Asurascans(Downloader):

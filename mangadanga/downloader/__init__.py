@@ -1,28 +1,17 @@
+# Local imports
 from .base import Downloader
-
-from .drivers import (
-    Mangadoom,
-    Manganato,
-    Mangatown,
-    Asurascans,
-)
-
 from .chapter_selection import (
-    ChapterSelectionStrategy,
+    AllChaptersSelection,
     ChapterListSelection,
     ChapterRangeSelection,
-    AllChaptersSelection,
+    ChapterSelectionStrategy,
     chapters_selection_factory,
 )
-
-from .config import DownloaderConfig
-
-from .downloader_factory import DOWNLOADERS, downloader_factory
-
-from .exceptions import DownloaderException
-
 from .concurrency import gather_with_concurrency
-
+from .config import DownloaderConfig
+from .downloader_factory import DOWNLOADERS, downloader_factory
+from .drivers import Asurascans, Mangadoom, Manganato, Mangatown
+from .exceptions import DownloaderException
 
 __all__ = [
     # .base

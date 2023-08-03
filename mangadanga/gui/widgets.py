@@ -1,14 +1,22 @@
 from __future__ import annotations
+
+# Standard Library
 import asyncio
+import logging
 import threading
 import tkinter
-from tkinter import Misc, ttk, filedialog, messagebox
-from mangadanga.downloader import downloader_factory, DownloaderConfig
+from tkinter import Misc, filedialog, messagebox, ttk
 from typing import Callable, Literal
-import logging
+
+# From apps
+from mangadanga.downloader import DownloaderConfig, downloader_factory
+
+# Local imports
+from ..downloader.config import ChapterStrategyConfig
+from ..downloader.exceptions import DownloaderException
 from .events import (
-    EventManager,
     EVENT_MANAGER,
+    EventManager,
     OnChapterDownloadFinished,
     OnCloseProgress,
     OnDownloadFinished,
@@ -17,8 +25,6 @@ from .events import (
     OnQuit,
     OnStartDownload,
 )
-from ..downloader.config import ChapterStrategyConfig
-from ..downloader.exceptions import DownloaderException
 from .utils import validate_non_empty, validate_numeric
 
 logger = logging.getLogger("MangaDanga-GUI")

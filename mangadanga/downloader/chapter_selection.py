@@ -1,7 +1,10 @@
-from ..downloader.config import ChapterStrategyConfig
-from .models import ChapterIndex
+# Standard Library
 from abc import ABC, abstractmethod
+
+# Local imports
+from ..downloader.config import ChapterStrategyConfig
 from .exceptions import DownloaderException
+from .models import ChapterIndex
 
 
 class ChapterSelectionStrategy(ABC):

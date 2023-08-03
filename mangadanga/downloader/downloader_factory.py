@@ -1,11 +1,12 @@
-from typing import Type
+# Standard Library
 import urllib.parse
-from .exceptions import DownloaderException
+
+# Local imports
 from .base import Downloader, DownloaderConfig
-from .drivers import Mangadoom, Manganato, Mangatown, Asurascans
+from .drivers import Asurascans, Mangadoom, Manganato, Mangatown
+from .exceptions import DownloaderException
 
-
-DOWNLOADERS: set[Type[Downloader]] = {
+DOWNLOADERS: set[type[Downloader]] = {
     Mangadoom,
     Manganato,
     Mangatown,
@@ -13,7 +14,7 @@ DOWNLOADERS: set[Type[Downloader]] = {
 }
 
 
-def downloader_factory(config: DownloaderConfig, downloaders: set[Type[Downloader]] = DOWNLOADERS) -> Downloader:
+def downloader_factory(config: DownloaderConfig, downloaders: set[type[Downloader]] = DOWNLOADERS) -> Downloader:
     domain = get_domain(config.url)
     try:
         downloader_cls = next(downloader for downloader in downloaders if domain in downloader.DOMAINS)

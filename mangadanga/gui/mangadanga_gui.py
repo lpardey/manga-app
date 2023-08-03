@@ -1,6 +1,8 @@
+# Standard Library
 import tkinter
 import tkinter.ttk
 
+# Local imports
 from ..downloader.config import DownloaderConfig
 from .style import GUIStyle
 from .widgets import MainWindow

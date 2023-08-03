@@ -1,6 +1,7 @@
-from typing import Any, Callable
-from queue import Queue
+# Standard Library
 import logging
+from queue import Queue
+from typing import Any, Callable
 
 logger = logging.getLogger("EventManager")
 

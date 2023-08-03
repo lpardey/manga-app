@@ -1,7 +1,6 @@
 # Standard Library
 from argparse import ArgumentParser
 
-
 PROGRAM_NAME = "MangaDanga"
 PROGRAM_DESCRIPTION = (
     "Download your favorite graphic novels! "

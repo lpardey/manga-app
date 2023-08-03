@@ -1,17 +1,17 @@
 # Standard Library
+import asyncio
 import logging
 import os
+import time
 from abc import ABC, abstractmethod
 from pathlib import PurePath
 from zipfile import ZipFile
-import time
 
 # Dependencies
 import aiohttp
-import asyncio
 from bs4 import BeautifulSoup, ResultSet
 
-
+# From apps
 from mangadanga.gui.events import (
     EVENT_MANAGER,
     EventManager,
@@ -22,10 +22,10 @@ from mangadanga.gui.events import (
 
 # Local imports
 from . import utils
-from .concurrency import gather_with_concurrency
-from .models import ChapterIndex
-from .config import DownloaderConfig
 from .chapter_selection import chapters_selection_factory
+from .concurrency import gather_with_concurrency
+from .config import DownloaderConfig
+from .models import ChapterIndex
 
 logger = logging.getLogger(__name__)
 

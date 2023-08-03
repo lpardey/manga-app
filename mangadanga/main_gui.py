@@ -1,5 +1,8 @@
-from .gui.mangadanga_gui import MangadangaGUI
+# Standard Library
 import logging
+
+# Local imports
+from .gui.mangadanga_gui import MangadangaGUI
 
 
 def main() -> None:

@@ -1,17 +1,18 @@
-from .style import GUIStyle
-from .widgets import MainWindow
-from .mangadanga_gui import MangadangaGUI
+# Local imports
 from .events import (
-    EventManager,
     EVENT_MANAGER,
     Event,
-    OnCloseProgress,
-    OnMangaInfoUpdate,
+    EventManager,
     OnChapterDownloadFinished,
+    OnCloseProgress,
     OnDownloadFinished,
     OnDownloadFinishedGUI,
+    OnMangaInfoUpdate,
     OnStartDownload,
 )
+from .mangadanga_gui import MangadangaGUI
+from .style import GUIStyle
+from .widgets import MainWindow
 
 __all__ = [
     "GUIStyle",
