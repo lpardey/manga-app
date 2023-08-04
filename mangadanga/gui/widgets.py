@@ -208,7 +208,7 @@ class UrlComponent:
     def __init__(self, container: Misc) -> None:
         self.label_frame = ttk.Labelframe(container, text="URL", style="TLabelframe")
         self.label_frame.grid(row=0, column=0, columnspan=2, padx=10, pady=10, sticky=tkinter.EW)
-        self.url_value = tkinter.StringVar(value="https://chapmanganato.com/manga-pf958088")
+        self.url_value = tkinter.StringVar()
         self.text = ttk.Entry(
             self.label_frame,
             textvariable=self.url_value,
@@ -378,14 +378,20 @@ class DownloadManagementComponent:
             self.chapter_list_entry["state"] = "disabled"
             self.chapter_range_lower_bound_entry["state"] = "disabled"
             self.chapter_range_upper_bound_entry["state"] = "disabled"
+            self.chapter_list_input.set("")
+            self.chapter_range_lower_bound_input.set("")
+            self.chapter_range_upper_bound_input.set("")
         elif index == 1:
             self.chapter_list_entry["state"] = "normal"
             self.chapter_range_lower_bound_entry["state"] = "disabled"
             self.chapter_range_upper_bound_entry["state"] = "disabled"
+            self.chapter_range_lower_bound_input.set("")
+            self.chapter_range_upper_bound_input.set("")
         elif index == 2:
             self.chapter_list_entry["state"] = "disabled"
             self.chapter_range_lower_bound_entry["state"] = "normal"
             self.chapter_range_upper_bound_entry["state"] = "normal"
+            self.chapter_list_input.set("")
 
 
 class MultithreadingComponent:
@@ -396,7 +402,9 @@ class MultithreadingComponent:
         self.label_frame.columnconfigure(1)
         self.label = ttk.Label(self.label_frame, text="Number of threads:", style="Generic.TLabel")
         self.label.grid(row=0, column=0, padx=10, pady=10, sticky=tkinter.W)
-        self.combo_box = ttk.Combobox(self.label_frame, values=list(range(1, 11)), width=3, font=("consolas", 8))
+        self.combo_box = ttk.Combobox(
+            self.label_frame, values=list(map(str, range(1, 11))), width=3, font=("consolas", 8)
+        )
         self.combo_box.set(init_config.threads)
         self.combo_box.grid(row=0, column=1, ipady=2, padx=10, pady=10)
 
