@@ -1,18 +1,18 @@
-# Mangadanga
+# MangaDanga
 
-The app receives a URL of a manga from a selected website to:
+This app scrapes data in regards a graphic novel from some supported website.
 
-1. Generate a directory named after the manga.
-2. Generate a zip file inside the directory for every chapter of the manga (Sorted jpg files will be inside the zip files).
+## What it does?
 
-Websites for request:
+1. Generates a directory named after the graphic novel.
+2. Generates a zip file for each chapter of the graphic novel (with its corresponding images) inside the directory.
+
+## Supported websites
     
-    Manga:
-          - https://manganato.com/
-          - https://www.mangatown.com/
+* **Manga**:
+  - <https://manganato.com/>
+  - <https://www.mangatown.com/>
 
-    Manwhas y Manhuas:
-
-          - https://www.asurascans.com/ 
-          - https://reaperscans.com/
-          - https://www.mngdoom.com/
+* **Manga, Manwhas and Manhuas**:
+  - <https://asura.gg/>
+  - <https://www.mngdoom.com/>
