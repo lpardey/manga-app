@@ -154,7 +154,7 @@ class Downloader(ABC):
         return image_name
 
     @staticmethod
-    def get_chapter_index(data: ResultSet, sep: list[str]) -> ChapterIndex:
+    def get_chapter_index(data: ResultSet, sep: list[str] | None) -> ChapterIndex:
         final_path = PurePath(data["href"]).name
         if not sep:
             chapter_index = final_path
