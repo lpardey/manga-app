@@ -20,7 +20,7 @@ def downloader_factory(config: DownloaderConfig, downloaders: set[type[Downloade
         downloader_cls = next(downloader for downloader in downloaders if domain in downloader.DOMAINS)
         return downloader_cls(config)
     except StopIteration:
-        valid_urls = sum((list(downloader.DOMAINS) for downloader in downloaders), start=[])
+        valid_urls: list[str] = sum((list(downloader.DOMAINS) for downloader in downloaders), start=[])
         message_lines = (
             [
                 f"'{config.url}' is not covered (yet) by Mangadanga.",
