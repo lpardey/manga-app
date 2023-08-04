@@ -11,6 +11,7 @@ class Asurascans(Downloader):
     URL = "https://asura.gg/"
     DOMAINS = {"www.asurascans.com", "asura.gg"}
     EXTRA_HEADERS = {"Referer": f"{URL}"}
+    SEPARATORS = ["chapter", "-"]
 
     def get_title(self, data: BeautifulSoup) -> str:
         title = data.find(class_="entry-title").string
@@ -19,8 +20,9 @@ class Asurascans(Downloader):
     def get_all_chapters_to_url(self, data: BeautifulSoup) -> dict[ChapterIndex, str]:
         chapter_content = data.find(class_="eplister").find_all("a")
         chapter_content.reverse()
-        separators = ["chapter", "-"]
-        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
+        chapter_number_to_url = {
+            self.get_chapter_index(data, self.SEPARATORS): data["href"] for data in chapter_content
+        }
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: ChapterIndex, data: BeautifulSoup) -> str:

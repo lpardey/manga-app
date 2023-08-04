@@ -11,6 +11,7 @@ class Mangatown(Downloader):
     URL = "https://www.mangatown.com/"
     DOMAINS = {"www.mangatown.com"}
     EXTRA_HEADERS = {"Referer": f"{URL}"}
+    SEPARATORS = ["c"]
 
     def get_title(self, data: BeautifulSoup) -> str:
         title = data.find(class_="title-top").string
@@ -19,9 +20,8 @@ class Mangatown(Downloader):
     def get_all_chapters_to_url(self, data: BeautifulSoup) -> dict[ChapterIndex, str]:
         chapter_content = data.find(class_="chapter_list").find_all("a")
         chapter_content.reverse()
-        separators = ["c"]
         chapter_number_to_url = {
-            self.get_chapter_index(data, separators): f"{self.URL}" + data["href"] for data in chapter_content
+            self.get_chapter_index(data, self.SEPARATORS): f"{self.URL}" + data["href"] for data in chapter_content
         }
         return chapter_number_to_url
 

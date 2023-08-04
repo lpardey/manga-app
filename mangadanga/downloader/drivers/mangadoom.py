@@ -11,6 +11,7 @@ class Mangadoom(Downloader):
     URL = "https://www.mngdoom.com/"
     DOMAINS = {"www.mngdoom.com"}
     EXTRA_HEADERS = {"Referer": f"{URL}"}
+    SEPARATORS = None
 
     def get_title(self, data: BeautifulSoup) -> str:
         title_div = data.find(class_="widget-heading")
@@ -20,8 +21,9 @@ class Mangadoom(Downloader):
     def get_all_chapters_to_url(self, data: BeautifulSoup) -> dict[ChapterIndex, str]:
         chapter_content = data.find(class_="chapter-list").find_all("a")
         chapter_content.reverse()
-        separators = []
-        chapter_number_to_url = {self.get_chapter_index(data, separators): data["href"] for data in chapter_content}
+        chapter_number_to_url = {
+            self.get_chapter_index(data, self.SEPARATORS): data["href"] for data in chapter_content
+        }
         return chapter_number_to_url
 
     def get_chapter_filename(self, index: ChapterIndex, data: BeautifulSoup) -> str:
