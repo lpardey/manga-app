@@ -155,15 +155,20 @@ class ProgressWindow:
     def __init__(self, container: Misc, event_manager: EventManager) -> None:
         self.container = container
         self.event_manager = event_manager
-        self.top_level_win = tkinter.Toplevel(self.container)
-        self.top_level_win.title("Progress")
-        self.top_level_win.resizable(False, False)
-        self.top_level_win.wm_transient(self.container)
+        self.top_level_win = self.set_top_level_win()
         self.progress_bar = ttk.Progressbar(self.top_level_win, orient="horizontal", length=300, mode="determinate")
         self.progress_bar.pack()
         self.progress_label = ttk.Label(self.top_level_win, text="Receiving manga info...", style="Generic.TLabel")
         self.progress_label.pack()
         self.set_events()
+
+    def set_top_level_win(self) -> tkinter.Toplevel:
+        top_level_win = tkinter.Toplevel(self.container)
+        top_level_win.title("Progress")
+        top_level_win.resizable(False, False)
+        top_level_win.transient(self.container)
+        top_level_win.configure(background="lavender")
+        return top_level_win
 
     def set_events(self) -> None:
         OnChapterDownloadFinished(self.event_manager).subscribe(self.on_chapter_download_finished)
