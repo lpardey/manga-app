@@ -10,19 +10,19 @@ from .widgets import MainWindow
 
 class MangadangaGUI:
     def __init__(self) -> None:
-        self.container = tkinter.Tk()
-        # self.container.wm_attributes("-toolwindow", True) # This is for windows
-        self.container.title("明るい")
-        # self.container.iconbitmap("/workspaces/manga-app/mangadanga/gui/static/Guts.ico")  # This is for windows
+        self.container = self.set_container()
         self.init_config = DownloaderConfig()
-        self.set_main_window()
         self.widgets = MainWindow(self.container, self.init_config)
         self.styles = GUIStyle(self.container)
 
-    def set_main_window(self) -> None:
+    def set_container(self) -> tkinter.Tk:
+        container = tkinter.Tk()
+        container.title("明るい")
+        container.iconbitmap(r"C:\Users\lpard\repos\manga-app\mangadanga\gui\static\Guts.ico")  # This is for windows
         self.main_window_column_row_config()
         self.center_main_window()
-        self.container.resizable(False, False)
+        container.resizable(False, False)
+        return container
 
     def main_window_column_row_config(self) -> None:
         self.container.columnconfigure(0, weight=1)
