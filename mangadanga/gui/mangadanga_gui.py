@@ -11,6 +11,9 @@ from .widgets import MainWindow
 class MangadangaGUI:
     def __init__(self) -> None:
         self.container = tkinter.Tk()
+        # self.container.wm_attributes("-toolwindow", True) # This is for windows
+        self.container.title("明るい")
+        # self.container.iconbitmap("/workspaces/manga-app/mangadanga/gui/static/Guts.ico")  # This is for windows
         self.init_config = DownloaderConfig()
         self.set_main_window()
         self.widgets = MainWindow(self.container, self.init_config)
