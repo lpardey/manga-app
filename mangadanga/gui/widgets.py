@@ -161,7 +161,7 @@ class ProgressWindow:
         self.top_level_win.wm_transient(self.container)
         self.progress_bar = ttk.Progressbar(self.top_level_win, orient="horizontal", length=300, mode="determinate")
         self.progress_bar.pack()
-        self.progress_label = ttk.Label(self.top_level_win, text="Receiving manga info...")
+        self.progress_label = ttk.Label(self.top_level_win, text="Receiving manga info...", style="Generic.TLabel")
         self.progress_label.pack()
         self.set_events()
 
@@ -213,7 +213,7 @@ class UrlComponent:
             self.label_frame,
             textvariable=self.url_value,
             width=50,
-            font=("consolas", 8),
+            font=("consolas", 9),
             style="TEntry",
         )
         self.text.grid(row=0, column=0, columnspan=2, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
@@ -232,7 +232,7 @@ class LocalPathComponent:
         self.label_frame.grid(row=1, column=0, padx=10, pady=10, sticky="NEW")
         self.path_value = tkinter.StringVar(value=self.init_config.path)
         self.text = ttk.Entry(
-            self.label_frame, textvariable=self.path_value, width=36, font=("consolas", 8), style="TEntry"
+            self.label_frame, textvariable=self.path_value, width=36, font=("consolas", 9), style="TEntry"
         )
         self.text.grid(row=1, column=0, ipady=2, padx=10, pady=10, sticky="NEW")
         self.button = ttk.Button(
@@ -289,7 +289,7 @@ class DownloadManagementComponent:
                 text=text,
                 variable=self.radio_input,
                 value=index,
-                font=("consolas", 8),
+                font=("consolas", 10),
                 background="lavender",
                 activebackground="lavender",
                 highlightthickness=0,
@@ -301,7 +301,7 @@ class DownloadManagementComponent:
             self.label_frame,
             textvariable=self.chapter_list_input,
             width=10,
-            font=("consolas", 8),
+            font=("consolas", 9),
             style="TEntry",
         )
         chapter_list_entry.grid(row=1, column=2, columnspan=3, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
@@ -312,7 +312,7 @@ class DownloadManagementComponent:
             self.label_frame,
             textvariable=self.chapter_range_lower_bound_input,
             width=3,
-            font=("consolas", 8),
+            font=("consolas", 9),
             style="TEntry",
         )
         chapter_range_lower_bound_entry.grid(row=2, column=2, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
@@ -327,7 +327,7 @@ class DownloadManagementComponent:
             self.label_frame,
             textvariable=self.chapter_range_upper_bound_input,
             width=3,
-            font=("consolas", 8),
+            font=("consolas", 9),
             style="TEntry",
         )
         chapter_range_upper_bound_entry.grid(row=2, column=4, ipady=2, padx=10, pady=10, sticky=tkinter.EW)
@@ -403,7 +403,7 @@ class MultithreadingComponent:
         self.label = ttk.Label(self.label_frame, text="Number of threads:", style="Generic.TLabel")
         self.label.grid(row=0, column=0, padx=10, pady=10, sticky=tkinter.W)
         self.combo_box = ttk.Combobox(
-            self.label_frame, values=list(map(str, range(1, 11))), width=3, font=("consolas", 8)
+            self.label_frame, values=list(map(str, range(1, 11))), width=3, font=("consolas", 9)
         )
         self.combo_box.set(init_config.threads)
         self.combo_box.grid(row=0, column=1, ipady=2, padx=10, pady=10)

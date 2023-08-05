@@ -30,7 +30,7 @@ class GUIStyle:
         self.style.configure(
             "Generic.TLabel",
             anchor=tkinter.CENTER,
-            font=("consolas", 8),
+            font=("consolas", 10),
             background="lavender",
         )
 
@@ -41,7 +41,7 @@ class GUIStyle:
             "TLabelframe.Label",
             background="lavender",
             foreground="dark goldenrod",
-            font=("consolas", 8),
+            font=("consolas", 10),
         )
 
     def set_button_style(self) -> None:
@@ -49,7 +49,7 @@ class GUIStyle:
             "TButton",
             background="LavenderBlush3",
             borderwidth=3,
-            font=("consolas", 7),
+            font=("consolas", 9),
             anchor=tkinter.CENTER,
             relief=tkinter.GROOVE,
         )
@@ -65,7 +65,7 @@ class GUIStyle:
         self.style.configure(
             "TNotebook.Tab",
             background="lavender",
-            font=("consolas", 8, "bold"),
+            font=("consolas", 10, "bold"),
             foreground="dark goldenrod",
         )
         self.style.map(
@@ -77,4 +77,4 @@ class GUIStyle:
     def set_combobox_style(self) -> None:
         self.style.configure("TCombobox", background="LavenderBlush3")
         self.style.map("TCombobox", background=[("active", "lavender blush")])
-        self.container.option_add("*TCombobox*Listbox*Font", ("consolas", 8))
+        self.container.option_add("*TCombobox*Listbox*Font", ("consolas", 10))
