@@ -3,6 +3,7 @@ aiohttp
 asyncio
 pydantic
 requests
+pyinstaller
 
 # Data Srapping and Parsing
 beautifulsoup4
