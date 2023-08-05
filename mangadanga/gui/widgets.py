@@ -165,6 +165,9 @@ class ProgressWindow:
     def set_top_level_win(self) -> tkinter.Toplevel:
         top_level_win = tkinter.Toplevel(self.container)
         top_level_win.title("Progress")
+        top_level_win.iconbitmap(
+            r"C:\Users\lpard\repos\manga-app\mangadanga\gui\static\Guts.ico"
+        )  # This is for windows
         top_level_win.resizable(False, False)
         top_level_win.transient(self.container)
         top_level_win.configure(background="lavender")
@@ -387,12 +390,14 @@ class DownloadManagementComponent:
             self.chapter_range_lower_bound_input.set("")
             self.chapter_range_upper_bound_input.set("")
         elif index == 1:
+            self.chapter_list_entry.focus()
             self.chapter_list_entry["state"] = "normal"
             self.chapter_range_lower_bound_entry["state"] = "disabled"
             self.chapter_range_upper_bound_entry["state"] = "disabled"
             self.chapter_range_lower_bound_input.set("")
             self.chapter_range_upper_bound_input.set("")
         elif index == 2:
+            self.chapter_range_lower_bound_entry.focus()
             self.chapter_list_entry["state"] = "disabled"
             self.chapter_range_lower_bound_entry["state"] = "normal"
             self.chapter_range_upper_bound_entry["state"] = "normal"
