@@ -2,7 +2,9 @@
 import tkinter
 import tkinter.ttk
 
+
 # Local imports
+from .utils import WINDOWS_ICON_RAW_PATH
 from ..downloader.config import DownloaderConfig
 from .style import GUIStyle
 from .widgets import MainWindow
@@ -18,9 +20,7 @@ class MangadangaGUI:
 
     def set_container_config(self) -> None:
         self.container.title("明るい")
-        self.container.iconbitmap(
-            r"C:\Users\lpard\repos\manga-app\mangadanga\gui\static\Guts.ico"
-        )  # This is for windows
+        # self.container.iconbitmap(WINDOWS_ICON_RAW_PATH)  # This is for windows
         self.container_column_row_config()
         self.center_container()
         self.container.resizable(False, False)

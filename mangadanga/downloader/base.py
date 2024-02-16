@@ -4,7 +4,7 @@ import logging
 import os
 import time
 from abc import ABC, abstractmethod
-from pathlib import PurePath
+from pathlib import Path
 from zipfile import ZipFile
 
 # Dependencies
@@ -82,7 +82,7 @@ class Downloader(ABC):
 
     def create_directory(self, dir_name: str) -> None:
         """Creates a directory on the path specified (default path: '.'). Returns directory path"""
-        path = os.path.join(self.config.path, dir_name)
+        path = self.config.path / dir_name
         if not os.path.isdir(path):
             os.makedirs(path)
 
@@ -119,7 +119,7 @@ class Downloader(ABC):
     async def process_chapter(self, index: ChapterIndex, chapter_url: str, manga_title: str) -> None:
         chapter_data = await self.scrape_url(chapter_url)
         chapter_filename = self.get_chapter_filename(index, chapter_data)
-        chapter_full_path = os.path.join(self.config.path, manga_title, chapter_filename)
+        chapter_full_path = self.config.path / manga_title / chapter_filename
         logger.info(f"Downloading chapter: {chapter_filename}")
         with ZipFile(chapter_full_path, "w") as zipf:
             await self.download_chapter(chapter_data, zipf)
@@ -155,7 +155,7 @@ class Downloader(ABC):
 
     @staticmethod
     def get_chapter_index(data: ResultSet, sep: list[str] | None) -> ChapterIndex:
-        final_path = PurePath(data["href"]).name
+        final_path = Path(data["href"]).name
         if not sep:
             chapter_index = final_path
         elif len(sep) == 2:
