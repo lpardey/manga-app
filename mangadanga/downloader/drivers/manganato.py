@@ -9,7 +9,7 @@ from ..models import ChapterIndex
 
 class Manganato(Downloader):
     URL = "https://manganato.com/"
-    DOMAINS = {"manganato.com", "chapmanganato.com"}
+    DOMAINS = {"manganato.com", "chapmanganato.com", "chapmanganato.to"}
     EXTRA_HEADERS = {"Referer": f"{URL}"}
     SEPARATORS = ["chapter", "-"]
 
