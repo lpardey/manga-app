@@ -95,7 +95,7 @@ class Downloader(ABC):
 
     async def download_chapter(self, data: BeautifulSoup, zipf: ZipFile) -> None:
         """Gets chapter data, creates a zip file by its name, and downloads and stores its images to the zip file"""
-        images_urls = await self.get_images_src(data)
+        images_urls = self.get_images_src(data)
         # This could be done in parallel
         images = await self.get_all_chapter_images(images_urls)
         # this is a blocking operation
@@ -126,7 +126,7 @@ class Downloader(ABC):
         all_chapters = self.get_all_chapters_to_url(web_data)
         chapter_number_to_url = self.get_chapter_number_to_url(all_chapters)
         chapters_tasks = [
-            self.process_chapter(index, url, sanitized_title) for index, url in chapter_number_to_url.items()
+            await self.process_chapter(index, url, sanitized_title) for index, url in chapter_number_to_url.items()
         ]
         await gather_with_concurrency(self.config.threads, *chapters_tasks)
 
